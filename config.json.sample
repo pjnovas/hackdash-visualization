@@ -1,0 +1,6 @@
+{
+  "db": {
+      "name": "hackdash_prod_dump"
+    , "host": "localhost"
+  }
+}

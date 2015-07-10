@@ -1,0 +1,32 @@
+{
+  "name": "hackdash-machine",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Pablo Novas <pjnovas@gmail.com>",
+  "license": "ISC",
+  "dependencies": {
+    "color": "^0.10.1",
+    "gameloop": "^0.3.2",
+    "matter-js": "^0.8.0",
+    "moment": "^2.10.3",
+    "pixi.js": "^3.0.7",
+    "point2js": "0.0.1"
+  },
+  "devDependencies": {
+    "async": "^1.3.0",
+    "babel": "^5.6.14",
+    "babel-core": "^5.6.15",
+    "babelify": "^6.1.2",
+    "grunt": "^0.4.5",
+    "grunt-browserify": "^3.8.0",
+    "install": "^0.1.8",
+    "jsonfile": "^2.2.1",
+    "lodash": "^3.10.0",
+    "mongoose": "^4.0.6",
+    "npm": "^2.12.1"
+  }
+}
