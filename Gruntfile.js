@@ -17,6 +17,7 @@ module.exports = function (grunt) {
           extension: [ '.js' ],
           transform: [
             [ 'babelify'/*, { 'stage': 2 }*/ ],
+            [ "hbsfy", { "extensions": [ "hbs" ] } ],
           ],
           watch: true,
           keepAlive: true

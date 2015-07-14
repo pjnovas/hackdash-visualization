@@ -7369,7 +7369,773 @@ function isNullOrUndefined(arg) {
   return  arg == null;
 }
 
-},{"punycode":"/home/pjnovas/projects/hackdash-machine/node_modules/grunt-browserify/node_modules/browserify/node_modules/punycode/punycode.js","querystring":"/home/pjnovas/projects/hackdash-machine/node_modules/grunt-browserify/node_modules/browserify/node_modules/querystring-es3/index.js"}],"/home/pjnovas/projects/hackdash-machine/node_modules/lodash/index.js":[function(require,module,exports){
+},{"punycode":"/home/pjnovas/projects/hackdash-machine/node_modules/grunt-browserify/node_modules/browserify/node_modules/punycode/punycode.js","querystring":"/home/pjnovas/projects/hackdash-machine/node_modules/grunt-browserify/node_modules/browserify/node_modules/querystring-es3/index.js"}],"/home/pjnovas/projects/hackdash-machine/node_modules/handlebars/dist/cjs/handlebars.runtime.js":[function(require,module,exports){
+'use strict';
+
+var _interopRequireWildcard = function (obj) { return obj && obj.__esModule ? obj : { 'default': obj }; };
+
+exports.__esModule = true;
+
+var _import = require('./handlebars/base');
+
+var base = _interopRequireWildcard(_import);
+
+// Each of these augment the Handlebars object. No need to setup here.
+// (This is done to easily share code between commonjs and browse envs)
+
+var _SafeString = require('./handlebars/safe-string');
+
+var _SafeString2 = _interopRequireWildcard(_SafeString);
+
+var _Exception = require('./handlebars/exception');
+
+var _Exception2 = _interopRequireWildcard(_Exception);
+
+var _import2 = require('./handlebars/utils');
+
+var Utils = _interopRequireWildcard(_import2);
+
+var _import3 = require('./handlebars/runtime');
+
+var runtime = _interopRequireWildcard(_import3);
+
+var _noConflict = require('./handlebars/no-conflict');
+
+var _noConflict2 = _interopRequireWildcard(_noConflict);
+
+// For compatibility and usage outside of module systems, make the Handlebars object a namespace
+function create() {
+  var hb = new base.HandlebarsEnvironment();
+
+  Utils.extend(hb, base);
+  hb.SafeString = _SafeString2['default'];
+  hb.Exception = _Exception2['default'];
+  hb.Utils = Utils;
+  hb.escapeExpression = Utils.escapeExpression;
+
+  hb.VM = runtime;
+  hb.template = function (spec) {
+    return runtime.template(spec, hb);
+  };
+
+  return hb;
+}
+
+var inst = create();
+inst.create = create;
+
+_noConflict2['default'](inst);
+
+inst['default'] = inst;
+
+exports['default'] = inst;
+module.exports = exports['default'];
+},{"./handlebars/base":"/home/pjnovas/projects/hackdash-machine/node_modules/handlebars/dist/cjs/handlebars/base.js","./handlebars/exception":"/home/pjnovas/projects/hackdash-machine/node_modules/handlebars/dist/cjs/handlebars/exception.js","./handlebars/no-conflict":"/home/pjnovas/projects/hackdash-machine/node_modules/handlebars/dist/cjs/handlebars/no-conflict.js","./handlebars/runtime":"/home/pjnovas/projects/hackdash-machine/node_modules/handlebars/dist/cjs/handlebars/runtime.js","./handlebars/safe-string":"/home/pjnovas/projects/hackdash-machine/node_modules/handlebars/dist/cjs/handlebars/safe-string.js","./handlebars/utils":"/home/pjnovas/projects/hackdash-machine/node_modules/handlebars/dist/cjs/handlebars/utils.js"}],"/home/pjnovas/projects/hackdash-machine/node_modules/handlebars/dist/cjs/handlebars/base.js":[function(require,module,exports){
+'use strict';
+
+var _interopRequireWildcard = function (obj) { return obj && obj.__esModule ? obj : { 'default': obj }; };
+
+exports.__esModule = true;
+exports.HandlebarsEnvironment = HandlebarsEnvironment;
+exports.createFrame = createFrame;
+
+var _import = require('./utils');
+
+var Utils = _interopRequireWildcard(_import);
+
+var _Exception = require('./exception');
+
+var _Exception2 = _interopRequireWildcard(_Exception);
+
+var VERSION = '3.0.1';
+exports.VERSION = VERSION;
+var COMPILER_REVISION = 6;
+
+exports.COMPILER_REVISION = COMPILER_REVISION;
+var REVISION_CHANGES = {
+  1: '<= 1.0.rc.2', // 1.0.rc.2 is actually rev2 but doesn't report it
+  2: '== 1.0.0-rc.3',
+  3: '== 1.0.0-rc.4',
+  4: '== 1.x.x',
+  5: '== 2.0.0-alpha.x',
+  6: '>= 2.0.0-beta.1'
+};
+
+exports.REVISION_CHANGES = REVISION_CHANGES;
+var isArray = Utils.isArray,
+    isFunction = Utils.isFunction,
+    toString = Utils.toString,
+    objectType = '[object Object]';
+
+function HandlebarsEnvironment(helpers, partials) {
+  this.helpers = helpers || {};
+  this.partials = partials || {};
+
+  registerDefaultHelpers(this);
+}
+
+HandlebarsEnvironment.prototype = {
+  constructor: HandlebarsEnvironment,
+
+  logger: logger,
+  log: log,
+
+  registerHelper: function registerHelper(name, fn) {
+    if (toString.call(name) === objectType) {
+      if (fn) {
+        throw new _Exception2['default']('Arg not supported with multiple helpers');
+      }
+      Utils.extend(this.helpers, name);
+    } else {
+      this.helpers[name] = fn;
+    }
+  },
+  unregisterHelper: function unregisterHelper(name) {
+    delete this.helpers[name];
+  },
+
+  registerPartial: function registerPartial(name, partial) {
+    if (toString.call(name) === objectType) {
+      Utils.extend(this.partials, name);
+    } else {
+      if (typeof partial === 'undefined') {
+        throw new _Exception2['default']('Attempting to register a partial as undefined');
+      }
+      this.partials[name] = partial;
+    }
+  },
+  unregisterPartial: function unregisterPartial(name) {
+    delete this.partials[name];
+  }
+};
+
+function registerDefaultHelpers(instance) {
+  instance.registerHelper('helperMissing', function () {
+    if (arguments.length === 1) {
+      // A missing field in a {{foo}} constuct.
+      return undefined;
+    } else {
+      // Someone is actually trying to call something, blow up.
+      throw new _Exception2['default']('Missing helper: "' + arguments[arguments.length - 1].name + '"');
+    }
+  });
+
+  instance.registerHelper('blockHelperMissing', function (context, options) {
+    var inverse = options.inverse,
+        fn = options.fn;
+
+    if (context === true) {
+      return fn(this);
+    } else if (context === false || context == null) {
+      return inverse(this);
+    } else if (isArray(context)) {
+      if (context.length > 0) {
+        if (options.ids) {
+          options.ids = [options.name];
+        }
+
+        return instance.helpers.each(context, options);
+      } else {
+        return inverse(this);
+      }
+    } else {
+      if (options.data && options.ids) {
+        var data = createFrame(options.data);
+        data.contextPath = Utils.appendContextPath(options.data.contextPath, options.name);
+        options = { data: data };
+      }
+
+      return fn(context, options);
+    }
+  });
+
+  instance.registerHelper('each', function (context, options) {
+    if (!options) {
+      throw new _Exception2['default']('Must pass iterator to #each');
+    }
+
+    var fn = options.fn,
+        inverse = options.inverse,
+        i = 0,
+        ret = '',
+        data = undefined,
+        contextPath = undefined;
+
+    if (options.data && options.ids) {
+      contextPath = Utils.appendContextPath(options.data.contextPath, options.ids[0]) + '.';
+    }
+
+    if (isFunction(context)) {
+      context = context.call(this);
+    }
+
+    if (options.data) {
+      data = createFrame(options.data);
+    }
+
+    function execIteration(field, index, last) {
+      if (data) {
+        data.key = field;
+        data.index = index;
+        data.first = index === 0;
+        data.last = !!last;
+
+        if (contextPath) {
+          data.contextPath = contextPath + field;
+        }
+      }
+
+      ret = ret + fn(context[field], {
+        data: data,
+        blockParams: Utils.blockParams([context[field], field], [contextPath + field, null])
+      });
+    }
+
+    if (context && typeof context === 'object') {
+      if (isArray(context)) {
+        for (var j = context.length; i < j; i++) {
+          execIteration(i, i, i === context.length - 1);
+        }
+      } else {
+        var priorKey = undefined;
+
+        for (var key in context) {
+          if (context.hasOwnProperty(key)) {
+            // We're running the iterations one step out of sync so we can detect
+            // the last iteration without have to scan the object twice and create
+            // an itermediate keys array.
+            if (priorKey) {
+              execIteration(priorKey, i - 1);
+            }
+            priorKey = key;
+            i++;
+          }
+        }
+        if (priorKey) {
+          execIteration(priorKey, i - 1, true);
+        }
+      }
+    }
+
+    if (i === 0) {
+      ret = inverse(this);
+    }
+
+    return ret;
+  });
+
+  instance.registerHelper('if', function (conditional, options) {
+    if (isFunction(conditional)) {
+      conditional = conditional.call(this);
+    }
+
+    // Default behavior is to render the positive path if the value is truthy and not empty.
+    // The `includeZero` option may be set to treat the condtional as purely not empty based on the
+    // behavior of isEmpty. Effectively this determines if 0 is handled by the positive path or negative.
+    if (!options.hash.includeZero && !conditional || Utils.isEmpty(conditional)) {
+      return options.inverse(this);
+    } else {
+      return options.fn(this);
+    }
+  });
+
+  instance.registerHelper('unless', function (conditional, options) {
+    return instance.helpers['if'].call(this, conditional, { fn: options.inverse, inverse: options.fn, hash: options.hash });
+  });
+
+  instance.registerHelper('with', function (context, options) {
+    if (isFunction(context)) {
+      context = context.call(this);
+    }
+
+    var fn = options.fn;
+
+    if (!Utils.isEmpty(context)) {
+      if (options.data && options.ids) {
+        var data = createFrame(options.data);
+        data.contextPath = Utils.appendContextPath(options.data.contextPath, options.ids[0]);
+        options = { data: data };
+      }
+
+      return fn(context, options);
+    } else {
+      return options.inverse(this);
+    }
+  });
+
+  instance.registerHelper('log', function (message, options) {
+    var level = options.data && options.data.level != null ? parseInt(options.data.level, 10) : 1;
+    instance.log(level, message);
+  });
+
+  instance.registerHelper('lookup', function (obj, field) {
+    return obj && obj[field];
+  });
+}
+
+var logger = {
+  methodMap: { 0: 'debug', 1: 'info', 2: 'warn', 3: 'error' },
+
+  // State enum
+  DEBUG: 0,
+  INFO: 1,
+  WARN: 2,
+  ERROR: 3,
+  level: 1,
+
+  // Can be overridden in the host environment
+  log: function log(level, message) {
+    if (typeof console !== 'undefined' && logger.level <= level) {
+      var method = logger.methodMap[level];
+      (console[method] || console.log).call(console, message); // eslint-disable-line no-console
+    }
+  }
+};
+
+exports.logger = logger;
+var log = logger.log;
+
+exports.log = log;
+
+function createFrame(object) {
+  var frame = Utils.extend({}, object);
+  frame._parent = object;
+  return frame;
+}
+
+/* [args, ]options */
+},{"./exception":"/home/pjnovas/projects/hackdash-machine/node_modules/handlebars/dist/cjs/handlebars/exception.js","./utils":"/home/pjnovas/projects/hackdash-machine/node_modules/handlebars/dist/cjs/handlebars/utils.js"}],"/home/pjnovas/projects/hackdash-machine/node_modules/handlebars/dist/cjs/handlebars/exception.js":[function(require,module,exports){
+'use strict';
+
+exports.__esModule = true;
+
+var errorProps = ['description', 'fileName', 'lineNumber', 'message', 'name', 'number', 'stack'];
+
+function Exception(message, node) {
+  var loc = node && node.loc,
+      line = undefined,
+      column = undefined;
+  if (loc) {
+    line = loc.start.line;
+    column = loc.start.column;
+
+    message += ' - ' + line + ':' + column;
+  }
+
+  var tmp = Error.prototype.constructor.call(this, message);
+
+  // Unfortunately errors are not enumerable in Chrome (at least), so `for prop in tmp` doesn't work.
+  for (var idx = 0; idx < errorProps.length; idx++) {
+    this[errorProps[idx]] = tmp[errorProps[idx]];
+  }
+
+  if (Error.captureStackTrace) {
+    Error.captureStackTrace(this, Exception);
+  }
+
+  if (loc) {
+    this.lineNumber = line;
+    this.column = column;
+  }
+}
+
+Exception.prototype = new Error();
+
+exports['default'] = Exception;
+module.exports = exports['default'];
+},{}],"/home/pjnovas/projects/hackdash-machine/node_modules/handlebars/dist/cjs/handlebars/no-conflict.js":[function(require,module,exports){
+(function (global){
+'use strict';
+
+exports.__esModule = true;
+/*global window */
+
+exports['default'] = function (Handlebars) {
+  /* istanbul ignore next */
+  var root = typeof global !== 'undefined' ? global : window,
+      $Handlebars = root.Handlebars;
+  /* istanbul ignore next */
+  Handlebars.noConflict = function () {
+    if (root.Handlebars === Handlebars) {
+      root.Handlebars = $Handlebars;
+    }
+  };
+};
+
+module.exports = exports['default'];
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],"/home/pjnovas/projects/hackdash-machine/node_modules/handlebars/dist/cjs/handlebars/runtime.js":[function(require,module,exports){
+'use strict';
+
+var _interopRequireWildcard = function (obj) { return obj && obj.__esModule ? obj : { 'default': obj }; };
+
+exports.__esModule = true;
+exports.checkRevision = checkRevision;
+
+// TODO: Remove this line and break up compilePartial
+
+exports.template = template;
+exports.wrapProgram = wrapProgram;
+exports.resolvePartial = resolvePartial;
+exports.invokePartial = invokePartial;
+exports.noop = noop;
+
+var _import = require('./utils');
+
+var Utils = _interopRequireWildcard(_import);
+
+var _Exception = require('./exception');
+
+var _Exception2 = _interopRequireWildcard(_Exception);
+
+var _COMPILER_REVISION$REVISION_CHANGES$createFrame = require('./base');
+
+function checkRevision(compilerInfo) {
+  var compilerRevision = compilerInfo && compilerInfo[0] || 1,
+      currentRevision = _COMPILER_REVISION$REVISION_CHANGES$createFrame.COMPILER_REVISION;
+
+  if (compilerRevision !== currentRevision) {
+    if (compilerRevision < currentRevision) {
+      var runtimeVersions = _COMPILER_REVISION$REVISION_CHANGES$createFrame.REVISION_CHANGES[currentRevision],
+          compilerVersions = _COMPILER_REVISION$REVISION_CHANGES$createFrame.REVISION_CHANGES[compilerRevision];
+      throw new _Exception2['default']('Template was precompiled with an older version of Handlebars than the current runtime. ' + 'Please update your precompiler to a newer version (' + runtimeVersions + ') or downgrade your runtime to an older version (' + compilerVersions + ').');
+    } else {
+      // Use the embedded version info since the runtime doesn't know about this revision yet
+      throw new _Exception2['default']('Template was precompiled with a newer version of Handlebars than the current runtime. ' + 'Please update your runtime to a newer version (' + compilerInfo[1] + ').');
+    }
+  }
+}
+
+function template(templateSpec, env) {
+  /* istanbul ignore next */
+  if (!env) {
+    throw new _Exception2['default']('No environment passed to template');
+  }
+  if (!templateSpec || !templateSpec.main) {
+    throw new _Exception2['default']('Unknown template object: ' + typeof templateSpec);
+  }
+
+  // Note: Using env.VM references rather than local var references throughout this section to allow
+  // for external users to override these as psuedo-supported APIs.
+  env.VM.checkRevision(templateSpec.compiler);
+
+  function invokePartialWrapper(partial, context, options) {
+    if (options.hash) {
+      context = Utils.extend({}, context, options.hash);
+    }
+
+    partial = env.VM.resolvePartial.call(this, partial, context, options);
+    var result = env.VM.invokePartial.call(this, partial, context, options);
+
+    if (result == null && env.compile) {
+      options.partials[options.name] = env.compile(partial, templateSpec.compilerOptions, env);
+      result = options.partials[options.name](context, options);
+    }
+    if (result != null) {
+      if (options.indent) {
+        var lines = result.split('\n');
+        for (var i = 0, l = lines.length; i < l; i++) {
+          if (!lines[i] && i + 1 === l) {
+            break;
+          }
+
+          lines[i] = options.indent + lines[i];
+        }
+        result = lines.join('\n');
+      }
+      return result;
+    } else {
+      throw new _Exception2['default']('The partial ' + options.name + ' could not be compiled when running in runtime-only mode');
+    }
+  }
+
+  // Just add water
+  var container = {
+    strict: function strict(obj, name) {
+      if (!(name in obj)) {
+        throw new _Exception2['default']('"' + name + '" not defined in ' + obj);
+      }
+      return obj[name];
+    },
+    lookup: function lookup(depths, name) {
+      var len = depths.length;
+      for (var i = 0; i < len; i++) {
+        if (depths[i] && depths[i][name] != null) {
+          return depths[i][name];
+        }
+      }
+    },
+    lambda: function lambda(current, context) {
+      return typeof current === 'function' ? current.call(context) : current;
+    },
+
+    escapeExpression: Utils.escapeExpression,
+    invokePartial: invokePartialWrapper,
+
+    fn: function fn(i) {
+      return templateSpec[i];
+    },
+
+    programs: [],
+    program: function program(i, data, declaredBlockParams, blockParams, depths) {
+      var programWrapper = this.programs[i],
+          fn = this.fn(i);
+      if (data || depths || blockParams || declaredBlockParams) {
+        programWrapper = wrapProgram(this, i, fn, data, declaredBlockParams, blockParams, depths);
+      } else if (!programWrapper) {
+        programWrapper = this.programs[i] = wrapProgram(this, i, fn);
+      }
+      return programWrapper;
+    },
+
+    data: function data(value, depth) {
+      while (value && depth--) {
+        value = value._parent;
+      }
+      return value;
+    },
+    merge: function merge(param, common) {
+      var obj = param || common;
+
+      if (param && common && param !== common) {
+        obj = Utils.extend({}, common, param);
+      }
+
+      return obj;
+    },
+
+    noop: env.VM.noop,
+    compilerInfo: templateSpec.compiler
+  };
+
+  function ret(context) {
+    var options = arguments[1] === undefined ? {} : arguments[1];
+
+    var data = options.data;
+
+    ret._setup(options);
+    if (!options.partial && templateSpec.useData) {
+      data = initData(context, data);
+    }
+    var depths = undefined,
+        blockParams = templateSpec.useBlockParams ? [] : undefined;
+    if (templateSpec.useDepths) {
+      depths = options.depths ? [context].concat(options.depths) : [context];
+    }
+
+    return templateSpec.main.call(container, context, container.helpers, container.partials, data, blockParams, depths);
+  }
+  ret.isTop = true;
+
+  ret._setup = function (options) {
+    if (!options.partial) {
+      container.helpers = container.merge(options.helpers, env.helpers);
+
+      if (templateSpec.usePartial) {
+        container.partials = container.merge(options.partials, env.partials);
+      }
+    } else {
+      container.helpers = options.helpers;
+      container.partials = options.partials;
+    }
+  };
+
+  ret._child = function (i, data, blockParams, depths) {
+    if (templateSpec.useBlockParams && !blockParams) {
+      throw new _Exception2['default']('must pass block params');
+    }
+    if (templateSpec.useDepths && !depths) {
+      throw new _Exception2['default']('must pass parent depths');
+    }
+
+    return wrapProgram(container, i, templateSpec[i], data, 0, blockParams, depths);
+  };
+  return ret;
+}
+
+function wrapProgram(container, i, fn, data, declaredBlockParams, blockParams, depths) {
+  function prog(context) {
+    var options = arguments[1] === undefined ? {} : arguments[1];
+
+    return fn.call(container, context, container.helpers, container.partials, options.data || data, blockParams && [options.blockParams].concat(blockParams), depths && [context].concat(depths));
+  }
+  prog.program = i;
+  prog.depth = depths ? depths.length : 0;
+  prog.blockParams = declaredBlockParams || 0;
+  return prog;
+}
+
+function resolvePartial(partial, context, options) {
+  if (!partial) {
+    partial = options.partials[options.name];
+  } else if (!partial.call && !options.name) {
+    // This is a dynamic partial that returned a string
+    options.name = partial;
+    partial = options.partials[partial];
+  }
+  return partial;
+}
+
+function invokePartial(partial, context, options) {
+  options.partial = true;
+
+  if (partial === undefined) {
+    throw new _Exception2['default']('The partial ' + options.name + ' could not be found');
+  } else if (partial instanceof Function) {
+    return partial(context, options);
+  }
+}
+
+function noop() {
+  return '';
+}
+
+function initData(context, data) {
+  if (!data || !('root' in data)) {
+    data = data ? _COMPILER_REVISION$REVISION_CHANGES$createFrame.createFrame(data) : {};
+    data.root = context;
+  }
+  return data;
+}
+},{"./base":"/home/pjnovas/projects/hackdash-machine/node_modules/handlebars/dist/cjs/handlebars/base.js","./exception":"/home/pjnovas/projects/hackdash-machine/node_modules/handlebars/dist/cjs/handlebars/exception.js","./utils":"/home/pjnovas/projects/hackdash-machine/node_modules/handlebars/dist/cjs/handlebars/utils.js"}],"/home/pjnovas/projects/hackdash-machine/node_modules/handlebars/dist/cjs/handlebars/safe-string.js":[function(require,module,exports){
+'use strict';
+
+exports.__esModule = true;
+// Build out our basic SafeString type
+function SafeString(string) {
+  this.string = string;
+}
+
+SafeString.prototype.toString = SafeString.prototype.toHTML = function () {
+  return '' + this.string;
+};
+
+exports['default'] = SafeString;
+module.exports = exports['default'];
+},{}],"/home/pjnovas/projects/hackdash-machine/node_modules/handlebars/dist/cjs/handlebars/utils.js":[function(require,module,exports){
+'use strict';
+
+exports.__esModule = true;
+exports.extend = extend;
+
+// Older IE versions do not directly support indexOf so we must implement our own, sadly.
+exports.indexOf = indexOf;
+exports.escapeExpression = escapeExpression;
+exports.isEmpty = isEmpty;
+exports.blockParams = blockParams;
+exports.appendContextPath = appendContextPath;
+var escape = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  '\'': '&#x27;',
+  '`': '&#x60;'
+};
+
+var badChars = /[&<>"'`]/g,
+    possible = /[&<>"'`]/;
+
+function escapeChar(chr) {
+  return escape[chr];
+}
+
+function extend(obj /* , ...source */) {
+  for (var i = 1; i < arguments.length; i++) {
+    for (var key in arguments[i]) {
+      if (Object.prototype.hasOwnProperty.call(arguments[i], key)) {
+        obj[key] = arguments[i][key];
+      }
+    }
+  }
+
+  return obj;
+}
+
+var toString = Object.prototype.toString;
+
+exports.toString = toString;
+// Sourced from lodash
+// https://github.com/bestiejs/lodash/blob/master/LICENSE.txt
+/*eslint-disable func-style, no-var */
+var isFunction = function isFunction(value) {
+  return typeof value === 'function';
+};
+// fallback for older versions of Chrome and Safari
+/* istanbul ignore next */
+if (isFunction(/x/)) {
+  exports.isFunction = isFunction = function (value) {
+    return typeof value === 'function' && toString.call(value) === '[object Function]';
+  };
+}
+var isFunction;
+exports.isFunction = isFunction;
+/*eslint-enable func-style, no-var */
+
+/* istanbul ignore next */
+var isArray = Array.isArray || function (value) {
+  return value && typeof value === 'object' ? toString.call(value) === '[object Array]' : false;
+};exports.isArray = isArray;
+
+function indexOf(array, value) {
+  for (var i = 0, len = array.length; i < len; i++) {
+    if (array[i] === value) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+function escapeExpression(string) {
+  if (typeof string !== 'string') {
+    // don't escape SafeStrings, since they're already safe
+    if (string && string.toHTML) {
+      return string.toHTML();
+    } else if (string == null) {
+      return '';
+    } else if (!string) {
+      return string + '';
+    }
+
+    // Force a string conversion as this will be done by the append regardless and
+    // the regex test will do this transparently behind the scenes, causing issues if
+    // an object's to string has escaped characters in it.
+    string = '' + string;
+  }
+
+  if (!possible.test(string)) {
+    return string;
+  }
+  return string.replace(badChars, escapeChar);
+}
+
+function isEmpty(value) {
+  if (!value && value !== 0) {
+    return true;
+  } else if (isArray(value) && value.length === 0) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+function blockParams(params, ids) {
+  params.path = ids;
+  return params;
+}
+
+function appendContextPath(contextPath, id) {
+  return (contextPath ? contextPath + '.' : '') + id;
+}
+},{}],"/home/pjnovas/projects/hackdash-machine/node_modules/handlebars/runtime.js":[function(require,module,exports){
+// Create a simple path alias to allow browserify to resolve
+// the runtime on a supported path.
+module.exports = require('./dist/cjs/handlebars.runtime')['default'];
+
+},{"./dist/cjs/handlebars.runtime":"/home/pjnovas/projects/hackdash-machine/node_modules/handlebars/dist/cjs/handlebars.runtime.js"}],"/home/pjnovas/projects/hackdash-machine/node_modules/hbsfy/runtime.js":[function(require,module,exports){
+module.exports = require("handlebars/runtime")["default"];
+
+},{"handlebars/runtime":"/home/pjnovas/projects/hackdash-machine/node_modules/handlebars/runtime.js"}],"/home/pjnovas/projects/hackdash-machine/node_modules/lodash/index.js":[function(require,module,exports){
 (function (global){
 /**
  * @license
@@ -47687,14 +48453,10 @@ var Circle = (function () {
 
     this.position = pos;
 
-    this.time = _moment2['default'].unix(options.tm);
-    this.tm = options.tm;
-
     this.stage = stage;
 
     this.fillColor = options.fillColor || '0xf8f8f8';
     this.lineColor = options.lineColor || '0xffffff';
-    //this.lineSize = options.lineSize;
     this.lineSize = 0;
 
     this.radius = options.radius || 5;
@@ -47719,16 +48481,21 @@ var Circle = (function () {
       this.graphics.mouseover = function () {
         _this.lineSize = 5;
         _this.draw();
+        _this.onOver();
       };
 
       this.graphics.mouseout = function () {
         _this.lineSize = 0;
         _this.draw();
+        _this.onOut();
       };
     }
   }, {
-    key: 'update',
-    value: function update(dt) {}
+    key: 'onOver',
+    value: function onOver() {}
+  }, {
+    key: 'onOut',
+    value: function onOut() {}
   }, {
     key: 'draw',
     value: function draw() {
@@ -47762,6 +48529,10 @@ var Circle = (function () {
 exports['default'] = Circle;
 ;
 module.exports = exports['default'];
+
+// override
+
+// override
 
 },{"moment":"/home/pjnovas/projects/hackdash-machine/node_modules/moment/moment.js","pixi.js":"/home/pjnovas/projects/hackdash-machine/node_modules/pixi.js/src/index.js"}],"/home/pjnovas/projects/hackdash-machine/src/Dashboard.js":[function(require,module,exports){
 'use strict';
@@ -47802,19 +48573,21 @@ var Dashboard = (function (_Circle) {
     options.fillColor = '0x' + c.hexString().replace('#', '');
 
     _get(Object.getPrototypeOf(Dashboard.prototype), 'constructor', this).call(this, stage, pos, options);
+    this.dash = options.dash;
   }
 
   _inherits(Dashboard, _Circle);
 
   _createClass(Dashboard, [{
-    key: 'set',
-    value: function set(prop, value) {
-      this[prop] = value;
-      this.create();
+    key: 'onOver',
+    value: function onOver() {
+      window.popover.show(this, this.dash);
     }
   }, {
-    key: 'update',
-    value: function update(dt) {}
+    key: 'onOut',
+    value: function onOut() {
+      window.popover.hide();
+    }
   }]);
 
   return Dashboard;
@@ -48046,18 +48819,105 @@ exports['default'] = function (options) {
     world.create();
   });
 
-  game.on('end', function () {});
+  game.on('end', function () {
+    console.log('machine end!');
+  });
 
   game.on('pause', function () {});
 
   game.on('resume', function () {});
 
+  window.world = world;
   return game;
 };
 
 module.exports = exports['default'];
 
-},{"./World":"/home/pjnovas/projects/hackdash-machine/src/World.js","gameloop":"/home/pjnovas/projects/hackdash-machine/node_modules/gameloop/index.js"}],"/home/pjnovas/projects/hackdash-machine/src/World.js":[function(require,module,exports){
+},{"./World":"/home/pjnovas/projects/hackdash-machine/src/World.js","gameloop":"/home/pjnovas/projects/hackdash-machine/node_modules/gameloop/index.js"}],"/home/pjnovas/projects/hackdash-machine/src/Popover.js":[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, '__esModule', {
+  value: true
+});
+
+var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+
+var _point2js = require('point2js');
+
+var _point2js2 = _interopRequireDefault(_point2js);
+
+var _templatesDashboardHbs = require('./templates/dashboard.hbs');
+
+var _templatesDashboardHbs2 = _interopRequireDefault(_templatesDashboardHbs);
+
+var Popover = (function () {
+  function Popover(options) {
+    _classCallCheck(this, Popover);
+
+    this.container = options.container;
+    this.container.style.display = 'none';
+  }
+
+  _createClass(Popover, [{
+    key: 'show',
+    value: function show(obj, data) {
+      var _this = this;
+
+      var css = this.container.style;
+
+      if (data.d === this.currentD && css.display === 'block') {
+        return;
+      }
+
+      window.clearTimeout(this.timer);
+      this.timer = window.setTimeout(function () {
+        _this.currentD = data.d;
+        css.display = 'block';
+      }, 100);
+
+      this.container.innerHTML = (0, _templatesDashboardHbs2['default'])(data);
+      this.setPosition(obj);
+    }
+  }, {
+    key: 'hide',
+    value: function hide() {
+      this.container.style.display = 'none';
+    }
+  }, {
+    key: 'setPosition',
+    value: function setPosition(obj) {
+      var ctn = this.container;
+      var bounds = window.world.size;
+      var size = new _point2js2['default'](ctn.clientWidth || 200, ctn.clientHeight || 150);
+
+      var r = obj.radius;
+      var center = obj.position.add(new _point2js2['default'](r + 10, -r));
+
+      var sum = center.add(size);
+      if (sum.x > bounds.x) {
+        center.x -= size.x;
+      }
+      if (sum.y > bounds.y) {
+        center.y -= size.y;
+      }
+
+      ctn.style.left = parseInt(center.x, 10) + 'px';
+      ctn.style.top = parseInt(center.y, 10) + 'px';
+    }
+  }]);
+
+  return Popover;
+})();
+
+exports['default'] = Popover;
+;
+module.exports = exports['default'];
+
+},{"./templates/dashboard.hbs":"/home/pjnovas/projects/hackdash-machine/src/templates/dashboard.hbs","point2js":"/home/pjnovas/projects/hackdash-machine/node_modules/point2js/lib/point2js.js"}],"/home/pjnovas/projects/hackdash-machine/src/World.js":[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -48162,6 +49022,7 @@ var World = (function () {
       });
 
       this.maxY = maxDash; // Max row = 100%
+      this.maxY *= 1.15; // plus 15% so it won't get out of screen
 
       this.col = new _point2js2['default']((this.size.x - this.padding.x) / this.months, // this.col.x month separation in px
       (this.size.y - this.padding.y) / this.maxY); // this.col.y projects count height separation
@@ -48263,7 +49124,7 @@ var World = (function () {
       var idx = this.entityIndex;
 
       if (!this.data[idx]) {
-        console.log('END!');
+        //window.machine.end();
         return;
       }
 
@@ -48283,9 +49144,10 @@ var World = (function () {
         return new _point2js2['default'](p.x + r * Math.cos(a), p.y + r * Math.sin(a));
       }
 
-      dash.radius = dash[this.vars.radius];
-
-      var d = new _Dashboard2['default'](this.stage, rnd(new _point2js2['default'](x, y), 10), dash);
+      var d = new _Dashboard2['default'](this.stage, rnd(new _point2js2['default'](x, y), 10), {
+        dash: dash,
+        radius: dash[this.vars.radius]
+      });
 
       this.dashboards.set(d.domain, d);
 
@@ -48305,11 +49167,15 @@ module.exports = exports['default'];
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
-require('babel-core/polyfill');
+require('./plugins');
 
 var _Machine = require('./Machine');
 
 var _Machine2 = _interopRequireDefault(_Machine);
+
+var _Popover = require('./Popover');
+
+var _Popover2 = _interopRequireDefault(_Popover);
 
 var httpReq = new XMLHttpRequest();
 
@@ -48325,6 +49191,10 @@ httpReq.send();
 
 function init(data) {
 
+  window.popover = new _Popover2['default']({
+    container: document.getElementById('popover')
+  });
+
   window.machine = (0, _Machine2['default'])({
     container: document.getElementById('container'),
     data: data
@@ -48333,4 +49203,52 @@ function init(data) {
   window.machine.start();
 }
 
-},{"./Machine":"/home/pjnovas/projects/hackdash-machine/src/Machine.js","babel-core/polyfill":"/home/pjnovas/projects/hackdash-machine/node_modules/babel-core/polyfill.js"}]},{},["/home/pjnovas/projects/hackdash-machine/src/index.js"]);
+},{"./Machine":"/home/pjnovas/projects/hackdash-machine/src/Machine.js","./Popover":"/home/pjnovas/projects/hackdash-machine/src/Popover.js","./plugins":"/home/pjnovas/projects/hackdash-machine/src/plugins.js"}],"/home/pjnovas/projects/hackdash-machine/src/plugins.js":[function(require,module,exports){
+'use strict';
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+require('babel-core/polyfill');
+
+var _hbsfyRuntime = require('hbsfy/runtime');
+
+var _hbsfyRuntime2 = _interopRequireDefault(_hbsfyRuntime);
+
+var _moment = require('moment');
+
+var _moment2 = _interopRequireDefault(_moment);
+
+_hbsfyRuntime2['default'].registerHelper('parseDate', function (unixTime) {
+  return _moment2['default'].unix(unixTime).format('DD MM YYYY');
+});
+
+},{"babel-core/polyfill":"/home/pjnovas/projects/hackdash-machine/node_modules/babel-core/polyfill.js","hbsfy/runtime":"/home/pjnovas/projects/hackdash-machine/node_modules/hbsfy/runtime.js","moment":"/home/pjnovas/projects/hackdash-machine/node_modules/moment/moment.js"}],"/home/pjnovas/projects/hackdash-machine/src/templates/dashboard.hbs":[function(require,module,exports){
+// hbsfy compiled Handlebars template
+var HandlebarsCompiler = require('hbsfy/runtime');
+module.exports = HandlebarsCompiler.template({"1":function(depth0,helpers,partials,data) {
+    var helper;
+
+  return "    "
+    + this.escapeExpression(((helper = (helper = helpers.n || (depth0 != null ? depth0.n : depth0)) != null ? helper : helpers.helperMissing),(typeof helper === "function" ? helper.call(depth0,{"name":"n","hash":{},"data":data}) : helper)))
+    + "\n";
+},"3":function(depth0,helpers,partials,data) {
+    var helper;
+
+  return "    "
+    + this.escapeExpression(((helper = (helper = helpers.d || (depth0 != null ? depth0.d : depth0)) != null ? helper : helpers.helperMissing),(typeof helper === "function" ? helper.call(depth0,{"name":"d","hash":{},"data":data}) : helper)))
+    + "\n";
+},"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+    var stack1, helper, alias1=helpers.helperMissing, alias2="function", alias3=this.escapeExpression;
+
+  return "<div class=\"header\">\n  <h2>\n"
+    + ((stack1 = helpers['if'].call(depth0,(depth0 != null ? depth0.n : depth0),{"name":"if","hash":{},"fn":this.program(1, data, 0),"inverse":this.program(3, data, 0),"data":data})) != null ? stack1 : "")
+    + "  </h2>\n</div>\n<div class=\"body\">\n  <div class=\"field\">\n    <label>Users: </label>\n    <span>"
+    + alias3(((helper = (helper = helpers.us || (depth0 != null ? depth0.us : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"us","hash":{},"data":data}) : helper)))
+    + "</span>\n  </div>\n  <div class=\"field\">\n    <label>Projects: </label>\n    <span>"
+    + alias3(((helper = (helper = helpers.pc || (depth0 != null ? depth0.pc : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"pc","hash":{},"data":data}) : helper)))
+    + "</span>\n  </div>\n  <div class=\"field\">\n    <label>Created: </label>\n    <span>"
+    + alias3((helpers.parseDate || (depth0 && depth0.parseDate) || alias1).call(depth0,(depth0 != null ? depth0.t : depth0),{"name":"parseDate","hash":{},"data":data}))
+    + "</span>\n  </div>\n</div>\n\n";
+},"useData":true});
+
+},{"hbsfy/runtime":"/home/pjnovas/projects/hackdash-machine/node_modules/hbsfy/runtime.js"}]},{},["/home/pjnovas/projects/hackdash-machine/src/index.js"]);

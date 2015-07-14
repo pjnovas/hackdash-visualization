@@ -69,6 +69,7 @@ export default class World {
     });
 
     this.maxY = maxDash; // Max row = 100%
+    this.maxY *= 1.15; // plus 15% so it won't get out of screen
 
     this.col = new Point(
       (this.size.x - this.padding.x) / this.months, // this.col.x month separation in px
@@ -167,7 +168,7 @@ export default class World {
     var idx = this.entityIndex;
 
     if (!this.data[idx]){
-      console.log('END!');
+      //window.machine.end();
       return;
     }
 
@@ -186,12 +187,10 @@ export default class World {
       return new Point(p.x + (r * Math.cos(a)), p.y + (r * Math.sin(a)));
     }
 
-    dash.radius = dash[this.vars.radius];
-
-    var d = new Dashboard(
-      this.stage,
-      rnd(new Point(x, y), 10),
-      dash);
+    var d = new Dashboard(this.stage, rnd(new Point(x, y), 10), {
+      dash: dash,
+      radius: dash[this.vars.radius]
+    });
 
     this.dashboards.set(d.domain, d);
 

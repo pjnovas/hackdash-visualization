@@ -7,14 +7,10 @@ export default class Circle {
   constructor(stage, pos, options) {
     this.position = pos;
 
-    this.time = moment.unix(options.tm);
-    this.tm = options.tm;
-
     this.stage = stage;
 
     this.fillColor = options.fillColor || '0xf8f8f8';
     this.lineColor = options.lineColor || '0xffffff';
-    //this.lineSize = options.lineSize;
     this.lineSize = 0;
 
     this.radius = options.radius || 5;
@@ -36,16 +32,22 @@ export default class Circle {
     this.graphics.mouseover = () => {
       this.lineSize = 5;
       this.draw();
+      this.onOver();
     };
 
     this.graphics.mouseout = () => {
       this.lineSize = 0;
       this.draw();
+      this.onOut();
     };
   }
 
-  update(dt) {
+  onOver(){
+    // override
+  }
 
+  onOut(){
+    // override
   }
 
   draw(){

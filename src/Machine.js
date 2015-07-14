@@ -20,7 +20,7 @@ export default function(options){
   });
 
   game.on('end', () => {
-
+    console.log('machine end!');
   });
 
   game.on('pause', () => {
@@ -31,5 +31,6 @@ export default function(options){
 
   });
 
+  window.world = world;
   return game;
 }

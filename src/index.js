@@ -1,6 +1,7 @@
 
-import 'babel-core/polyfill';
+import './plugins';
 import Machine from './Machine';
+import Popover from './Popover';
 
 var httpReq = new XMLHttpRequest();
 
@@ -15,6 +16,10 @@ httpReq.open("GET", "/dashboards.json", true);
 httpReq.send();
 
 function init(data){
+
+  window.popover = new Popover({
+    container: document.getElementById('popover')
+  });
 
   window.machine = Machine({
     container: document.getElementById('container'),

@@ -1,0 +1,24 @@
+<div class="header">
+  <h2>
+  {{#if n}}
+    {{n}}
+  {{else}}
+    {{d}}
+  {{/if}}
+  </h2>
+</div>
+<div class="body">
+  <div class="field">
+    <label>Users: </label>
+    <span>{{us}}</span>
+  </div>
+  <div class="field">
+    <label>Projects: </label>
+    <span>{{pc}}</span>
+  </div>
+  <div class="field">
+    <label>Created: </label>
+    <span>{{parseDate t}}</span>
+  </div>
+</div>
+

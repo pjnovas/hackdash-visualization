@@ -13,15 +13,15 @@ export default class Dashboard extends Circle {
     options.fillColor = '0x' + c.hexString().replace('#', '');
 
     super(stage, pos, options);
+    this.dash = options.dash;
   }
 
-  set(prop, value){
-    this[prop] = value;
-    this.create();
+  onOver(){
+    window.popover.show(this, this.dash);
   }
 
-  update(dt) {
-
+  onOut(){
+    window.popover.hide();
   }
 
 };
