@@ -60,7 +60,7 @@ export default class World {
     this.startYear = ystart;
     this.startMonth = first.month();
 
-    this.months = ((yend - ystart) * 12) + last.month() + 1; // total of months
+    this.months = ((yend - ystart) * 12) + last.month() + 2; // total of months
     this.months -= this.startMonth;
 
     var maxDash = 0;
@@ -175,7 +175,8 @@ export default class World {
     var dash = this.data[idx];
 
     var time = moment.unix(dash.t);
-    var month = ((time.year() - this.startYear) * 12) + time.month() - this.startMonth;
+    var m = time.month() + 1;
+    var month = ((time.year() - this.startYear) * 12) + m - this.startMonth;
 
     var percHeight = (dash[this.vars.height] * 100)/this.maxY;
     var y = (this.size.y - this.padding.y/2) - (percHeight * this.col.y);

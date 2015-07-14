@@ -131,6 +131,7 @@ canvas {
 #popover h2 {
     margin-top: 0;
     word-break: break-all;
+    line-height: 1;
 }
 
 

@@ -16,6 +16,10 @@ export default class Dashboard extends Circle {
     this.dash = options.dash;
   }
 
+  onClick(){
+    window.open('https://hackdash.org/dashboards/' + this.dash.d, '_blank');
+  }
+
   onOver(){
     window.popover.show(this, this.dash);
   }

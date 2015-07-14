@@ -47,7 +47,7 @@ Dashboard
           // set admins
           function(admins, done){
             admins = admins || [];
-            dash.ads = admins.map(function(a) { return a._id; });
+            dash.ads = admins.map(function(a) { return a._id.toString(); });
             done();
           },
 
@@ -62,10 +62,13 @@ Dashboard
             var people = [];
 
             // leader is inside contributors
-            projects.forEach(function(c){
-              if (people.indexOf(c) === -1 && dash.ads.indexOf(c) === -1){
-                people.push(c);
-              }
+            projects.forEach(function(p){
+              p.contributors.forEach(function(c){
+                var id = c.toString();
+                if (people.indexOf(id) === -1 && dash.ads.indexOf(id) === -1){
+                  people.push(id);
+                }
+              });
             });
 
             // set people count including admins and contributors

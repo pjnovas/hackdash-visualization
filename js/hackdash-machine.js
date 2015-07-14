@@ -48489,7 +48489,12 @@ var Circle = (function () {
         _this.draw();
         _this.onOut();
       };
+
+      this.graphics.mouseup = this.onClick.bind(this);
     }
+  }, {
+    key: 'onClick',
+    value: function onClick() {}
   }, {
     key: 'onOver',
     value: function onOver() {}
@@ -48529,6 +48534,8 @@ var Circle = (function () {
 exports['default'] = Circle;
 ;
 module.exports = exports['default'];
+
+// override
 
 // override
 
@@ -48579,6 +48586,11 @@ var Dashboard = (function (_Circle) {
   _inherits(Dashboard, _Circle);
 
   _createClass(Dashboard, [{
+    key: 'onClick',
+    value: function onClick() {
+      window.open('https://hackdash.org/dashboards/' + this.dash.d, '_blank');
+    }
+  }, {
     key: 'onOver',
     value: function onOver() {
       window.popover.show(this, this.dash);
@@ -49013,7 +49025,7 @@ var World = (function () {
       this.startYear = ystart;
       this.startMonth = first.month();
 
-      this.months = (yend - ystart) * 12 + last.month() + 1; // total of months
+      this.months = (yend - ystart) * 12 + last.month() + 2; // total of months
       this.months -= this.startMonth;
 
       var maxDash = 0;
@@ -49131,7 +49143,8 @@ var World = (function () {
       var dash = this.data[idx];
 
       var time = _moment2['default'].unix(dash.t);
-      var month = (time.year() - this.startYear) * 12 + time.month() - this.startMonth;
+      var m = time.month() + 1;
+      var month = (time.year() - this.startYear) * 12 + m - this.startMonth;
 
       var percHeight = dash[this.vars.height] * 100 / this.maxY;
       var y = this.size.y - this.padding.y / 2 - percHeight * this.col.y;
@@ -49242,7 +49255,7 @@ module.exports = HandlebarsCompiler.template({"1":function(depth0,helpers,partia
 
   return "<div class=\"header\">\n  <h2>\n"
     + ((stack1 = helpers['if'].call(depth0,(depth0 != null ? depth0.n : depth0),{"name":"if","hash":{},"fn":this.program(1, data, 0),"inverse":this.program(3, data, 0),"data":data})) != null ? stack1 : "")
-    + "  </h2>\n</div>\n<div class=\"body\">\n  <div class=\"field\">\n    <label>Users: </label>\n    <span>"
+    + "  </h2>\n</div>\n<div class=\"body\">\n  <div class=\"field\">\n    <label>People: </label>\n    <span>"
     + alias3(((helper = (helper = helpers.us || (depth0 != null ? depth0.us : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"us","hash":{},"data":data}) : helper)))
     + "</span>\n  </div>\n  <div class=\"field\">\n    <label>Projects: </label>\n    <span>"
     + alias3(((helper = (helper = helpers.pc || (depth0 != null ? depth0.pc : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"pc","hash":{},"data":data}) : helper)))

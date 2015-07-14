@@ -40,6 +40,12 @@ export default class Circle {
       this.draw();
       this.onOut();
     };
+
+    this.graphics.mouseup = this.onClick.bind(this);
+  }
+
+  onClick(){
+    // override
   }
 
   onOver(){
