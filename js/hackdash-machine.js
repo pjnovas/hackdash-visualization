@@ -48840,6 +48840,11 @@ exports['default'] = function (options) {
   game.on('resume', function () {});
 
   window.world = world;
+
+  game.toggleWorld = function () {
+    return world.toggle();
+  };
+
   return game;
 };
 
@@ -48986,20 +48991,49 @@ var World = (function () {
 
     this.entityIndex = 0;
 
+    this.zoom = 1;
+    this.maxZoom = 3;
+    this.minZoom = 1;
+
     this.dashboards = new Map();
 
-    this.vars = {
-      radius: 'us',
-      height: 'pc'
-    };
-
-    this.vars = {
-      radius: 'pc',
-      height: 'us'
-    };
+    this.currVars = 'us/pc';
+    this.setVars();
   }
 
   _createClass(World, [{
+    key: 'toggle',
+    value: function toggle() {
+      this.currVars = this.currVars === 'us/pc' ? 'pc/us' : 'us/pc';
+      this.setVars();
+
+      this.stage.removeChildren();
+      this.entityIndex = 0;
+      this.dashboards = new Map();
+      this.setTimeLine();
+
+      return this.currVars;
+    }
+  }, {
+    key: 'setVars',
+    value: function setVars() {
+
+      switch (this.currVars) {
+        case 'us/pc':
+          this.vars = {
+            radius: 'us',
+            height: 'pc'
+          };
+          break;
+        case 'pc/us':
+          this.vars = {
+            radius: 'pc',
+            height: 'us'
+          };
+          break;
+      }
+    }
+  }, {
     key: 'create',
     value: function create() {
       var renderer = new _pixiJs2['default'].autoDetectRenderer(this.size.x, this.size.y);
@@ -49007,14 +49041,97 @@ var World = (function () {
 
       this.renderer = renderer;
       this.stage = new _pixiJs2['default'].Container();
+
+      //this.stage.hitArea = new PIXI.Rectangle(0, 0, this.size.x, this.size.y);
       this.stage.interactive = true;
 
       this.setTimeLine();
+      //this.attachEvents();
+    }
+  }, {
+    key: 'attachEvents',
+    value: function attachEvents() {
+      var _this = this;
+
+      this.dragging = false;
+      this.mousePressPoint = new _point2js2['default']();
+
+      this.container.addEventListener('wheel', function (e) {
+        var p = new _point2js2['default'](e.clientX, e.clientY);
+        if (e.wheelDelta > 0) _this.zoomIn(p);else _this.zoomOut(p);
+      });
+
+      this.stage.mousedown = this.stage.touchstart = function (data) {
+        _this.dragging = true;
+
+        _this.mousePressPoint = new _point2js2['default'](data.data.global.x - _this.stage.position.x, data.data.global.y - _this.stage.position.y);
+      };
+
+      this.stage.mouseup = this.stage.mouseupoutside = this.stage.touchend = this.stage.touchendoutside = function (data) {
+        _this.dragging = false;
+      };
+
+      this.stage.mousemove = this.stage.touchmove = function (data) {
+        if (!_this.dragging) {
+          return;
+        }
+
+        var p = new _point2js2['default'](data.data.global);
+        _this.stage.position.x = p.x - _this.mousePressPoint.x;
+        _this.stage.position.y = p.y - _this.mousePressPoint.y;
+
+        _this.constrainWorld();
+      };
+    }
+  }, {
+    key: 'zoomIn',
+    value: function zoomIn(p) {
+      var zoomPA = this.screenToWorld(p);
+
+      this.zoom = Math.min(this.zoom * 1.5, this.maxZoom);
+      this.stage.scale.x = this.stage.scale.y = this.zoom;
+
+      var zoomPB = this.worldToScreen(p);
+      this.stage.position.x = (zoomPB.x - p.x) / this.zoom;
+      this.stage.position.y = (zoomPB.y - p.y) / this.zoom;
+
+      this.constrainWorld();
+    }
+  }, {
+    key: 'zoomOut',
+    value: function zoomOut(p) {
+      var zoomPA = this.screenToWorld(p);
+
+      this.zoom = Math.max(this.zoom / 1.5, this.minZoom);
+      this.stage.scale.x = this.stage.scale.y = this.zoom;
+
+      var zoomPB = this.worldToScreen(zoomPA);
+      this.stage.position.x = (zoomPB.x - zoomPA.x) / this.zoom;
+      this.stage.position.y = (zoomPB.y - zoomPA.y) / this.zoom;
+
+      this.constrainWorld();
+    }
+  }, {
+    key: 'screenToWorld',
+    value: function screenToWorld(p) {
+      return new _point2js2['default'](this.stage.position.x + p.x / this.zoom, this.stage.position.y + p.y / this.zoom);
+    }
+  }, {
+    key: 'worldToScreen',
+    value: function worldToScreen(p) {
+      return new _point2js2['default']((p.x - this.stage.position.x) * this.zoom, (p.y - this.stage.position.y) * this.zoom);
+    }
+  }, {
+    key: 'constrainWorld',
+    value: function constrainWorld() {
+      var p = this.stage.position;
+      p.x = Math.min(Math.max(p.x, -1 * this.zoom * this.size.x), 0);
+      p.y = Math.min(Math.max(p.y, -1 * this.zoom * this.size.y), 0);
     }
   }, {
     key: 'setTimeLine',
     value: function setTimeLine() {
-      var _this = this;
+      var _this2 = this;
 
       var first = _moment2['default'].unix(_lodash2['default'].first(this.data).t);
       var last = _moment2['default'].unix(_lodash2['default'].last(this.data).t);
@@ -49030,7 +49147,7 @@ var World = (function () {
 
       var maxDash = 0;
       this.data.forEach(function (dash) {
-        if (dash[_this.vars.height] > maxDash) maxDash = dash[_this.vars.height];
+        if (dash[_this2.vars.height] > maxDash) maxDash = dash[_this2.vars.height];
       });
 
       this.maxY = maxDash; // Max row = 100%
@@ -49045,7 +49162,7 @@ var World = (function () {
   }, {
     key: 'createHeightBars',
     value: function createHeightBars() {
-      var _this2 = this;
+      var _this3 = this;
 
       var gap = 20;
       var times = 100 / gap;
@@ -49055,12 +49172,12 @@ var World = (function () {
 
       _lodash2['default'].times(times, function (i) {
 
-        var p = _this2.size.y * i * gap / 100;
-        var y = parseInt(_this2.size.y - p, 10);
-        var val = i * gap * _this2.maxY / 100;
+        var p = _this3.size.y * i * gap / 100;
+        var y = parseInt(_this3.size.y - p, 10);
+        var val = i * gap * _this3.maxY / 100;
 
-        if (y <= _this2.size.y - _this2.padding.y / 3 && y >= _this2.padding.y / 2) {
-          var l = new _HLine2['default'](_this2.stage, new _point2js2['default'](x - 10, y), new _point2js2['default'](x - width2, y), {
+        if (y <= _this3.size.y - _this3.padding.y / 3 && y >= _this3.padding.y / 2) {
+          var l = new _HLine2['default'](_this3.stage, new _point2js2['default'](x - 10, y), new _point2js2['default'](x - width2, y), {
             lineColor: '0xffffff',
             text: parseInt(val, 10).toString()
           });
@@ -49070,7 +49187,7 @@ var World = (function () {
   }, {
     key: 'createTimeBars',
     value: function createTimeBars() {
-      var _this3 = this;
+      var _this4 = this;
 
       var halfPadX = this.padding.x / 2;
       var y = parseInt(this.size.y - this.padding.y / 2, 10);
@@ -49083,7 +49200,7 @@ var World = (function () {
       var cMonth = fMonth;
 
       _lodash2['default'].times(this.months, function (i) {
-        var x = parseInt(i * _this3.col.x + halfPadX, 10);
+        var x = parseInt(i * _this4.col.x + halfPadX, 10);
 
         var m2 = '';
         var m = i + fMonth;
@@ -49100,7 +49217,7 @@ var World = (function () {
           cm = '';
         }
 
-        var l = new _Line2['default'](_this3.stage, new _point2js2['default'](x, y + height), new _point2js2['default'](x, y + h), {
+        var l = new _Line2['default'](_this4.stage, new _point2js2['default'](x, y + height), new _point2js2['default'](x, y + h), {
           lineColor: '0xffffff',
           text: cm,
           text2: m2
@@ -49212,6 +49329,15 @@ function init(data) {
     container: document.getElementById('container'),
     data: data
   });
+
+  var toggler = document.getElementById('toggler');
+
+  toggler.addEventListener('click', function (e) {
+    var current = window.machine.toggleWorld();
+    toggler.innerText = current === 'us/pc' ? 'people / projects' : 'projects / people';
+  });
+
+  toggler.innerText = 'people / projects';
 
   window.machine.start();
 }

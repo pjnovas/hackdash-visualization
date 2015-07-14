@@ -26,6 +26,15 @@ function init(data){
     data: data
   });
 
+  var toggler = document.getElementById('toggler');
+
+  toggler.addEventListener('click', e => {
+    var current = window.machine.toggleWorld();
+    toggler.innerText = (current === 'us/pc' ? 'people / projects' : 'projects / people');
+  });
+
+  toggler.innerText = 'people / projects';
+
   window.machine.start();
 }
 

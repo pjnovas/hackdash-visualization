@@ -134,7 +134,13 @@ canvas {
     line-height: 1;
 }
 
-
+#toggler {
+    position: absolute;
+    right: 0;
+    top: 0;
+    color: #fff;
+    cursor:pointer;
+}
 
 
 

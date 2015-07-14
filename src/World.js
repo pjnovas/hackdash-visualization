@@ -24,18 +24,44 @@ export default class World {
 
     this.entityIndex = 0;
 
+    this.zoom = 1;
+    this.maxZoom = 3;
+    this.minZoom = 1;
+
     this.dashboards = new Map();
 
-    this.vars = {
-      radius: 'us',
-      height: 'pc'
-    };
+    this.currVars = 'us/pc';
+    this.setVars();
+  }
 
-    this.vars = {
-      radius: 'pc',
-      height: 'us'
-    };
+  toggle() {
+    this.currVars = (this.currVars === 'us/pc' ? 'pc/us' : 'us/pc');
+    this.setVars();
 
+    this.stage.removeChildren();
+    this.entityIndex = 0;
+    this.dashboards = new Map();
+    this.setTimeLine();
+
+    return this.currVars;
+  }
+
+  setVars() {
+
+    switch(this.currVars){
+      case 'us/pc':
+        this.vars = {
+          radius: 'us',
+          height: 'pc'
+        };
+        break;
+      case 'pc/us':
+        this.vars = {
+          radius: 'pc',
+          height: 'us'
+        };
+        break;
+    }
   }
 
   create() {
@@ -44,9 +70,97 @@ export default class World {
 
     this.renderer = renderer;
     this.stage = new PIXI.Container();
+
+    //this.stage.hitArea = new PIXI.Rectangle(0, 0, this.size.x, this.size.y);
     this.stage.interactive = true;
 
     this.setTimeLine();
+    //this.attachEvents();
+  }
+
+  attachEvents() {
+    this.dragging = false;
+    this.mousePressPoint = new Point();
+
+    this.container.addEventListener('wheel', e => {
+      var p = new Point(e.clientX, e.clientY);
+      if (e.wheelDelta > 0) this.zoomIn(p);
+      else this.zoomOut(p);
+    });
+
+    this.stage.mousedown = this.stage.touchstart = data => {
+      this.dragging = true;
+
+      this.mousePressPoint = new Point(
+        data.data.global.x - this.stage.position.x,
+        data.data.global.y - this.stage.position.y);
+    };
+
+    this.stage.mouseup =
+      this.stage.mouseupoutside =
+      this.stage.touchend =
+      this.stage.touchendoutside = data => {
+        this.dragging = false;
+      };
+
+    this.stage.mousemove = this.stage.touchmove = data => {
+      if(!this.dragging) {
+        return;
+      }
+
+      var p = new Point(data.data.global);
+      this.stage.position.x = p.x - this.mousePressPoint.x;
+      this.stage.position.y = p.y - this.mousePressPoint.y;
+
+      this.constrainWorld();
+    };
+
+  }
+
+  zoomIn(p){
+    var zoomPA = this.screenToWorld(p);
+
+    this.zoom = Math.min(this.zoom * 1.5, this.maxZoom);
+    this.stage.scale.x = this.stage.scale.y = this.zoom;
+
+    var zoomPB = this.worldToScreen(p);
+    this.stage.position.x = (zoomPB.x - p.x) / this.zoom;
+    this.stage.position.y = (zoomPB.y - p.y) / this.zoom;
+
+    this.constrainWorld();
+  }
+
+  zoomOut(p){
+    var zoomPA = this.screenToWorld(p);
+
+    this.zoom = Math.max(this.zoom / 1.5, this.minZoom);
+    this.stage.scale.x = this.stage.scale.y = this.zoom;
+
+    var zoomPB = this.worldToScreen(zoomPA);
+    this.stage.position.x = (zoomPB.x - zoomPA.x) / this.zoom;
+    this.stage.position.y = (zoomPB.y - zoomPA.y) / this.zoom;
+
+    this.constrainWorld();
+  }
+
+  screenToWorld(p) {
+    return new Point(
+      this.stage.position.x + p.x / this.zoom,
+      this.stage.position.y + p.y / this.zoom
+    );
+  }
+
+  worldToScreen(p) {
+    return new Point(
+      (p.x - this.stage.position.x) * this.zoom,
+      (p.y - this.stage.position.y) * this.zoom
+    );
+  }
+
+  constrainWorld(){
+    var p = this.stage.position;
+    p.x = Math.min(Math.max(p.x, -1 * this.zoom * this.size.x), 0);
+    p.y = Math.min(Math.max(p.y, -1 * this.zoom * this.size.y), 0);
   }
 
   setTimeLine() {

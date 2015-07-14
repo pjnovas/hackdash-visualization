@@ -32,5 +32,10 @@ export default function(options){
   });
 
   window.world = world;
+
+  game.toggleWorld = function(){
+    return world.toggle();
+  };
+
   return game;
 }
