@@ -48661,7 +48661,7 @@ var HLine = (function () {
 
       this.stage.addChild(this.graphics);
 
-      var text = new _pixiJs2['default'].Text(this.text, { font: '20px Arial', fill: 'white' });
+      var text = new _pixiJs2['default'].Text(this.text, { font: '20px monospace', fill: 'white' });
 
       text.position.x = this.from.x - this.text.length * 10;
       text.position.y = this.to.y - 25;
@@ -48753,14 +48753,14 @@ var Line = (function () {
 
       var xT = this.to.x - this.text.length * 5;
 
-      var text = new _pixiJs2['default'].Text(this.text, { font: '16px Arial', fill: 'white' });
+      var text = new _pixiJs2['default'].Text(this.text, { font: '16px monospace', fill: 'white' });
 
       text.position.x = xT;
       text.position.y = this.to.y;
 
       this.stage.addChild(text);
 
-      var text2 = new _pixiJs2['default'].Text(this.text2, { font: '20px Arial', fill: 'white' });
+      var text2 = new _pixiJs2['default'].Text(this.text2, { font: '20px monospace', fill: 'white' });
 
       text2.position.x = this.to.x + 10;
       text2.position.y = this.to.y - 20;
@@ -48841,8 +48841,8 @@ exports['default'] = function (options) {
 
   window.world = world;
 
-  game.toggleWorld = function () {
-    return world.toggle();
+  game.changeMetric = function (type, value) {
+    return world.changeMetric(type, value);
   };
 
   return game;
@@ -48921,6 +48921,9 @@ var Popover = (function () {
       if (sum.y > bounds.y) {
         center.y -= size.y;
       }
+      if (center.y < 0) {
+        center.y += size.y;
+      }
 
       ctn.style.left = parseInt(center.x, 10) + 'px';
       ctn.style.top = parseInt(center.y, 10) + 'px';
@@ -48997,41 +49000,21 @@ var World = (function () {
 
     this.dashboards = new Map();
 
-    this.currVars = 'us/pc';
-    this.setVars();
+    this.vars = {
+      radius: 'us',
+      height: 'pc'
+    };
   }
 
   _createClass(World, [{
-    key: 'toggle',
-    value: function toggle() {
-      this.currVars = this.currVars === 'us/pc' ? 'pc/us' : 'us/pc';
-      this.setVars();
+    key: 'changeMetric',
+    value: function changeMetric(type, value) {
+      this.vars[type] = value;
 
       this.stage.removeChildren();
       this.entityIndex = 0;
       this.dashboards = new Map();
       this.setTimeLine();
-
-      return this.currVars;
-    }
-  }, {
-    key: 'setVars',
-    value: function setVars() {
-
-      switch (this.currVars) {
-        case 'us/pc':
-          this.vars = {
-            radius: 'us',
-            height: 'pc'
-          };
-          break;
-        case 'pc/us':
-          this.vars = {
-            radius: 'pc',
-            height: 'us'
-          };
-          break;
-      }
     }
   }, {
     key: 'create',
@@ -49169,19 +49152,18 @@ var World = (function () {
       var x = parseInt(this.padding.x / 2, 10);
       var width = 30,
           width2 = width * 2;
+      var totH = this.size.y - this.padding.y / 2;
 
       _lodash2['default'].times(times, function (i) {
 
-        var p = _this3.size.y * i * gap / 100;
-        var y = parseInt(_this3.size.y - p, 10);
+        var p = totH * i * gap / 100;
+        var y = parseInt(totH - p, 10);
         var val = i * gap * _this3.maxY / 100;
 
-        if (y <= _this3.size.y - _this3.padding.y / 3 && y >= _this3.padding.y / 2) {
-          var l = new _HLine2['default'](_this3.stage, new _point2js2['default'](x - 10, y), new _point2js2['default'](x - width2, y), {
-            lineColor: '0xffffff',
-            text: parseInt(val, 10).toString()
-          });
-        }
+        var l = new _HLine2['default'](_this3.stage, new _point2js2['default'](x - 10, y), new _point2js2['default'](x - width2, y), {
+          lineColor: '0xffffff',
+          text: parseInt(val ? val : 1, 10).toString()
+        });
       });
     }
   }, {
@@ -49263,8 +49245,10 @@ var World = (function () {
       var m = time.month() + 1;
       var month = (time.year() - this.startYear) * 12 + m - this.startMonth;
 
+      var totH = this.size.y - this.padding.y / 2;
       var percHeight = dash[this.vars.height] * 100 / this.maxY;
-      var y = this.size.y - this.padding.y / 2 - percHeight * this.col.y;
+      //var y = totH - (percHeight * this.col.y);
+      var y = totH - totH * percHeight / 100;
       var x = month * this.col.x + this.padding.x / 2;
 
       function rnd(p, radius) {
@@ -49330,14 +49314,18 @@ function init(data) {
     data: data
   });
 
-  var toggler = document.getElementById('toggler');
+  var radius = document.getElementById('radius');
+  var height = document.getElementById('height');
 
-  toggler.addEventListener('click', function (e) {
-    var current = window.machine.toggleWorld();
-    toggler.innerText = current === 'us/pc' ? 'people / projects' : 'projects / people';
+  radius.addEventListener('change', function (e) {
+    var val = radius.options[radius.selectedIndex].value;
+    window.machine.changeMetric('radius', val);
   });
 
-  toggler.innerText = 'people / projects';
+  height.addEventListener('change', function (e) {
+    var val = height.options[height.selectedIndex].value;
+    window.machine.changeMetric('height', val);
+  });
 
   window.machine.start();
 }

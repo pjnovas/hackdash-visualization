@@ -33,8 +33,8 @@ export default function(options){
 
   window.world = world;
 
-  game.toggleWorld = function(){
-    return world.toggle();
+  game.changeMetric = function(type, value){
+    return world.changeMetric(type, value);
   };
 
   return game;

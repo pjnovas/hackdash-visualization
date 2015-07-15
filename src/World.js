@@ -30,38 +30,19 @@ export default class World {
 
     this.dashboards = new Map();
 
-    this.currVars = 'us/pc';
-    this.setVars();
+    this.vars = {
+      radius: 'us',
+      height: 'pc'
+    };
   }
 
-  toggle() {
-    this.currVars = (this.currVars === 'us/pc' ? 'pc/us' : 'us/pc');
-    this.setVars();
+  changeMetric(type, value) {
+    this.vars[type] = value;
 
     this.stage.removeChildren();
     this.entityIndex = 0;
     this.dashboards = new Map();
     this.setTimeLine();
-
-    return this.currVars;
-  }
-
-  setVars() {
-
-    switch(this.currVars){
-      case 'us/pc':
-        this.vars = {
-          radius: 'us',
-          height: 'pc'
-        };
-        break;
-      case 'pc/us':
-        this.vars = {
-          radius: 'pc',
-          height: 'us'
-        };
-        break;
-    }
   }
 
   create() {
@@ -198,22 +179,21 @@ export default class World {
     var times = 100 / gap;
     var x = parseInt(this.padding.x/2, 10);
     var width = 30, width2 = width*2;
+    var totH = this.size.y - (this.padding.y/2);
 
     _.times(times, (i) => {
 
-      var p = (this.size.y * i * gap) / 100;
-      var y = parseInt(this.size.y - p, 10);
+      var p = (totH * i * gap) / 100;
+      var y = parseInt(totH - p, 10);
       var val = (i * gap * this.maxY) / 100;
 
-      if (y <= this.size.y - this.padding.y/3 && y >= this.padding.y/2){
-        var l = new HLine(
-          this.stage,
-          new Point(x - 10, y),
-          new Point(x - width2, y), {
-            lineColor: '0xffffff',
-            text: parseInt(val, 10).toString()
-          });
-      }
+      var l = new HLine(
+        this.stage,
+        new Point(x - 10, y),
+        new Point(x - width2, y), {
+          lineColor: '0xffffff',
+          text: parseInt(val ? val : 1, 10).toString()
+        });
 
     });
   }
@@ -292,8 +272,10 @@ export default class World {
     var m = time.month() + 1;
     var month = ((time.year() - this.startYear) * 12) + m - this.startMonth;
 
+    var totH = this.size.y - (this.padding.y/2);
     var percHeight = (dash[this.vars.height] * 100)/this.maxY;
-    var y = (this.size.y - this.padding.y/2) - (percHeight * this.col.y);
+    //var y = totH - (percHeight * this.col.y);
+    var y = totH - (totH * percHeight / 100);
     var x = (month * this.col.x) + (this.padding.x/2);
 
     function rnd(p, radius){ // random point whithin a circle

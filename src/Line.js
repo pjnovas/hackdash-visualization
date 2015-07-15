@@ -34,14 +34,14 @@ export default class Line {
 
     var xT = this.to.x - (this.text.length * 5);
 
-    var text = new PIXI.Text(this.text, {font:'16px Arial', fill:'white'});
+    var text = new PIXI.Text(this.text, {font:'16px monospace', fill:'white'});
 
     text.position.x = xT;
     text.position.y = this.to.y;
 
     this.stage.addChild(text);
 
-    var text2 = new PIXI.Text(this.text2, {font:'20px Arial', fill:'white'});
+    var text2 = new PIXI.Text(this.text2, {font:'20px monospace', fill:'white'});
 
     text2.position.x = this.to.x + 10;
     text2.position.y = this.to.y - 20;

@@ -26,14 +26,18 @@ function init(data){
     data: data
   });
 
-  var toggler = document.getElementById('toggler');
+  var radius = document.getElementById('radius');
+  var height = document.getElementById('height');
 
-  toggler.addEventListener('click', e => {
-    var current = window.machine.toggleWorld();
-    toggler.innerText = (current === 'us/pc' ? 'people / projects' : 'projects / people');
+  radius.addEventListener('change', e => {
+    var val = radius.options[radius.selectedIndex].value;
+    window.machine.changeMetric('radius', val);
   });
 
-  toggler.innerText = 'people / projects';
+  height.addEventListener('change', e => {
+    var val = height.options[height.selectedIndex].value;
+    window.machine.changeMetric('height', val);
+  });
 
   window.machine.start();
 }

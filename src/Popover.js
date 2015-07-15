@@ -45,6 +45,9 @@ export default class Popover {
     if (sum.y > bounds.y){
       center.y -= size.y;
     }
+    if (center.y < 0){
+      center.y += size.y;
+    }
 
     ctn.style.left = parseInt(center.x, 10) + 'px';
     ctn.style.top = parseInt(center.y, 10) + 'px';

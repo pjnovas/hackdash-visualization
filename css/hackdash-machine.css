@@ -97,6 +97,7 @@ textarea {
 
 body {
     background-color: #333;
+    font-family: monospace;
 }
 
 html, body {
@@ -134,17 +135,23 @@ canvas {
     line-height: 1;
 }
 
-#toggler {
+.metrics {
     position: absolute;
-    right: 0;
     top: 0;
-    color: #fff;
     cursor:pointer;
 }
 
+.metrics.height {
+    left: 0;
+}
 
-
-
+.metrics.radius {
+    right: 0;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 0 0 0 6px;
+    color: #fff;
+}
 
 
 

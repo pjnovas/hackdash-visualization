@@ -31,7 +31,7 @@ export default class HLine {
 
     this.stage.addChild(this.graphics);
 
-    var text = new PIXI.Text(this.text, {font:'20px Arial', fill:'white'});
+    var text = new PIXI.Text(this.text, {font:'20px monospace', fill:'white'});
 
     text.position.x = this.from.x - (this.text.length * 10);
     text.position.y = this.to.y - 25;
