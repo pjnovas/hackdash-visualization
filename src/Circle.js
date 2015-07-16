@@ -14,25 +14,10 @@ export default class Circle {
 
     this.tweenPos = null;
     this.tweenRadius = null;
+
+    this.hover = false;
   }
-/*
-  create(){
 
-    this.graphics.mouseover = () => {
-      this.lineSize = 5;
-      this.draw();
-      this.onOver();
-    };
-
-    this.graphics.mouseout = () => {
-      this.lineSize = 0;
-      this.draw();
-      this.onOut();
-    };
-
-    this.graphics.mouseup = this.onClick.bind(this);
-  }
-*/
   tweenTo(pos, radius, duration, easing) {
     this.clearTween('tweenPos');
     this.clearTween('tweenRadius');
@@ -64,6 +49,34 @@ export default class Circle {
     }
   }
 
+  mouseEvents() {
+    var mouse = window.input;
+
+    if (this.isPointInside(mouse.position)){
+
+      if (!this.hover){
+        this.lineSize = 5;
+        this.hover = true;
+        this.onOver();
+      }
+
+      if (mouse.isDown){
+        this.onClick();
+        mouse.isDown = false; // hack > fire click on only first match
+      }
+
+    }
+    else if (this.hover){
+      this.lineSize = 0;
+      this.hover = false;
+      this.onOut();
+    }
+  }
+
+  isPointInside(point){
+    return point.subtract(this.position).length() <= this.radius;
+  }
+
   onClick(){
     // override
   }
@@ -89,6 +102,7 @@ export default class Circle {
       this.radius = parseInt(this.radius, 10);
     }
 
+    this.mouseEvents();
   }
 
   draw(ctx) {

@@ -1,11 +1,13 @@
 
 import Gameloop from 'gameloop';
 import World from './World';
+import Input from './Input';
 
 export default function(options){
 
   var game = new Gameloop();
   var world = new World(options.container, options.data);
+  var input = new Input(options.container);
 
   game.on('update', dt => {
     world.update(dt);
@@ -32,6 +34,7 @@ export default function(options){
   });
 
   window.world = world;
+  window.input = input;
 
   game.changeMetric = function(type, value){
     return world.changeMetric(type, value);

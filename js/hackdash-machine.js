@@ -23092,29 +23092,12 @@ var Circle = (function () {
 
     this.tweenPos = null;
     this.tweenRadius = null;
+
+    this.hover = false;
   }
 
   _createClass(Circle, [{
     key: 'tweenTo',
-
-    /*
-      create(){
-    
-        this.graphics.mouseover = () => {
-          this.lineSize = 5;
-          this.draw();
-          this.onOver();
-        };
-    
-        this.graphics.mouseout = () => {
-          this.lineSize = 0;
-          this.draw();
-          this.onOut();
-        };
-    
-        this.graphics.mouseup = this.onClick.bind(this);
-      }
-    */
     value: function tweenTo(pos, radius, duration, easing) {
       var _this = this;
 
@@ -23153,6 +23136,34 @@ var Circle = (function () {
       }
     }
   }, {
+    key: 'mouseEvents',
+    value: function mouseEvents() {
+      var mouse = window.input;
+
+      if (this.isPointInside(mouse.position)) {
+
+        if (!this.hover) {
+          this.lineSize = 5;
+          this.hover = true;
+          this.onOver();
+        }
+
+        if (mouse.isDown) {
+          this.onClick();
+          mouse.isDown = false; // hack > fire click on only first match
+        }
+      } else if (this.hover) {
+        this.lineSize = 0;
+        this.hover = false;
+        this.onOut();
+      }
+    }
+  }, {
+    key: 'isPointInside',
+    value: function isPointInside(point) {
+      return point.subtract(this.position).length() <= this.radius;
+    }
+  }, {
     key: 'onClick',
     value: function onClick() {}
   }, {
@@ -23175,6 +23186,8 @@ var Circle = (function () {
         this.tweenRadius.update(acc);
         this.radius = parseInt(this.radius, 10);
       }
+
+      this.mouseEvents();
     }
   }, {
     key: 'draw',
@@ -23330,7 +23343,132 @@ exports['default'] = HLine;
 ;
 module.exports = exports['default'];
 
-},{}],"/home/pjnovas/projects/hackdash-machine/src/Line.js":[function(require,module,exports){
+},{}],"/home/pjnovas/projects/hackdash-machine/src/Input.js":[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, '__esModule', {
+  value: true
+});
+
+var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+
+var _point2js = require('point2js');
+
+var _point2js2 = _interopRequireDefault(_point2js);
+
+var _lodash = require('lodash');
+
+var _lodash2 = _interopRequireDefault(_lodash);
+
+var Input = (function () {
+  function Input(container) {
+    _classCallCheck(this, Input);
+
+    this.container = container || window && window.document;
+
+    this.position = new _point2js2['default']();
+    this.isDown = false;
+
+    this.enabled = true;
+    this.attachEvents();
+  }
+
+  _createClass(Input, [{
+    key: 'attachEvents',
+    value: function attachEvents() {
+      var _this = this;
+
+      if (this.events) {
+        this._clearEvents();
+      }
+
+      this.events = {
+        mouseup: this.onmouseup.bind(this),
+        mousedown: this.onmousedown.bind(this),
+        mousemove: this.onmousemove.bind(this),
+        mouseover: this.onmousemove.bind(this)
+      };
+
+      _lodash2['default'].forIn(this.events, function (event, type) {
+        _this.container.addEventListener(type, event);
+      });
+    }
+  }, {
+    key: 'clearEvents',
+    value: function clearEvents() {
+      var _this2 = this;
+
+      _lodash2['default'].forIn(this.events, function (event, type) {
+        _this2.container.removeEventListener(type, event);
+      });
+    }
+  }, {
+    key: 'updatePosition',
+    value: function updatePosition(e) {
+      this.position = this.getEventPosition(e);
+    }
+  }, {
+    key: 'onmouseup',
+    value: function onmouseup(e) {
+      if (!this.enabled) return;
+      this.updatePosition(e);
+      this.isDown = false;
+    }
+  }, {
+    key: 'onmousedown',
+    value: function onmousedown(e) {
+      if (!this.enabled) return;
+      this.updatePosition(e);
+      this.isDown = true;
+    }
+  }, {
+    key: 'onmousemove',
+    value: function onmousemove(e) {
+      this.updatePosition(e);
+    }
+  }, {
+    key: 'getEventPosition',
+    value: function getEventPosition(e) {
+      var x = 0,
+          y = 0,
+          doc = document,
+          body = doc.body,
+          docEle = doc.documentElement,
+          ele = this.container,
+          parent = ele.parentNode || body;
+
+      if (e.pageX || e.pageY) {
+        x = e.pageX;
+        y = e.pageY;
+      } else {
+        x = e.clientX + body.scrollLeft + docEle.scrollLeft;
+        y = e.clientY + body.scrollTop + docEle.scrollTop;
+      }
+
+      x -= (ele.offsetLeft || 0) + parent.offsetLeft;
+      y -= (ele.offsetTop || 0) + parent.offsetTop;
+
+      x += parent.scrollLeft;
+      y += parent.scrollTop;
+
+      x = Math.round(x);
+      y = Math.round(y);
+
+      return new _point2js2['default'](x, y);
+    }
+  }]);
+
+  return Input;
+})();
+
+exports['default'] = Input;
+module.exports = exports['default'];
+
+},{"lodash":"/home/pjnovas/projects/hackdash-machine/node_modules/lodash/index.js","point2js":"/home/pjnovas/projects/hackdash-machine/node_modules/point2js/lib/point2js.js"}],"/home/pjnovas/projects/hackdash-machine/src/Line.js":[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -23409,10 +23547,15 @@ var _World = require('./World');
 
 var _World2 = _interopRequireDefault(_World);
 
+var _Input = require('./Input');
+
+var _Input2 = _interopRequireDefault(_Input);
+
 exports['default'] = function (options) {
 
   var game = new _gameloop2['default']();
   var world = new _World2['default'](options.container, options.data);
+  var input = new _Input2['default'](options.container);
 
   game.on('update', function (dt) {
     world.update(dt);
@@ -23435,6 +23578,7 @@ exports['default'] = function (options) {
   game.on('resume', function () {});
 
   window.world = world;
+  window.input = input;
 
   game.changeMetric = function (type, value) {
     return world.changeMetric(type, value);
@@ -23445,7 +23589,7 @@ exports['default'] = function (options) {
 
 module.exports = exports['default'];
 
-},{"./World":"/home/pjnovas/projects/hackdash-machine/src/World.js","gameloop":"/home/pjnovas/projects/hackdash-machine/node_modules/gameloop/index.js"}],"/home/pjnovas/projects/hackdash-machine/src/Popover.js":[function(require,module,exports){
+},{"./Input":"/home/pjnovas/projects/hackdash-machine/src/Input.js","./World":"/home/pjnovas/projects/hackdash-machine/src/World.js","gameloop":"/home/pjnovas/projects/hackdash-machine/node_modules/gameloop/index.js"}],"/home/pjnovas/projects/hackdash-machine/src/Popover.js":[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -23605,7 +23749,6 @@ var World = (function () {
       this.vars[type] = value;
 
       this.entityIndex = 0;
-
       this.linesV = [];
       this.linesH = [];
       this.setTimeLine();
@@ -23801,19 +23944,17 @@ var World = (function () {
       var toR = dash[this.vars.radius];
 
       var d = this.dashboards.get(dash.d);
-      if (d) {
-        d.tweenTo({ x: to.x, y: to.y }, toR, 3, 'Quartic.Out');
-      } else {
+      if (!d) {
 
         d = new _Dashboard2['default'](pStart, {
           dash: dash,
           radius: rStart
         });
 
-        d.tweenTo({ x: to.x, y: to.y }, toR, 3, 'Quartic.Out');
-
         this.dashboards.set(dash.d, d);
       }
+
+      d.tweenTo({ x: to.x, y: to.y }, toR, 3, 'Quartic.Out');
 
       this.entityIndex++;
     }

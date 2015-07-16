@@ -41,7 +41,6 @@ export default class World {
     this.vars[type] = value;
 
     this.entityIndex = 0;
-
     this.linesV = [];
     this.linesH = [];
     this.setTimeLine();
@@ -225,20 +224,17 @@ export default class World {
     var toR = dash[this.vars.radius];
 
     var d = this.dashboards.get(dash.d);
-    if (d){
-      d.tweenTo({ x: to.x, y: to.y }, toR, 3, 'Quartic.Out');
-    }
-    else {
+    if (!d){
 
       d = new Dashboard(pStart, {
         dash: dash,
         radius: rStart
       });
 
-      d.tweenTo({ x: to.x, y: to.y }, toR, 3, 'Quartic.Out');
-
       this.dashboards.set(dash.d, d);
     }
+
+    d.tweenTo({ x: to.x, y: to.y }, toR, 3, 'Quartic.Out');
 
     this.entityIndex++;
   }
