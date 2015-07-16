@@ -2,7 +2,6 @@
 import Point from 'point2js';
 import moment from 'moment';
 import _ from 'lodash';
-import PIXI from 'pixi.js';
 
 import Dashboard from './Dashboard';
 import Line from './Line';
@@ -29,6 +28,8 @@ export default class World {
     this.minZoom = 1;
 
     this.dashboards = new Map();
+    this.linesV = [];
+    this.linesH = [];
 
     this.vars = {
       radius: 'us',
@@ -39,109 +40,26 @@ export default class World {
   changeMetric(type, value) {
     this.vars[type] = value;
 
-    this.stage.removeChildren();
     this.entityIndex = 0;
-    this.dashboards = new Map();
+
+    this.linesV = [];
+    this.linesH = [];
     this.setTimeLine();
   }
 
   create() {
-    var renderer = new PIXI.autoDetectRenderer(this.size.x, this.size.y);
-    this.container.appendChild(renderer.view);
 
-    this.renderer = renderer;
-    this.stage = new PIXI.Container();
+    var canvas = document.createElement('canvas');
 
-    //this.stage.hitArea = new PIXI.Rectangle(0, 0, this.size.x, this.size.y);
-    this.stage.interactive = true;
+    canvas.width = this.size.x;
+    canvas.height = this.size.y;
+
+    this.canvas = canvas;
+    this.context = canvas.getContext('2d');
+
+    this.container.appendChild(this.canvas);
 
     this.setTimeLine();
-    //this.attachEvents();
-  }
-
-  attachEvents() {
-    this.dragging = false;
-    this.mousePressPoint = new Point();
-
-    this.container.addEventListener('wheel', e => {
-      var p = new Point(e.clientX, e.clientY);
-      if (e.wheelDelta > 0) this.zoomIn(p);
-      else this.zoomOut(p);
-    });
-
-    this.stage.mousedown = this.stage.touchstart = data => {
-      this.dragging = true;
-
-      this.mousePressPoint = new Point(
-        data.data.global.x - this.stage.position.x,
-        data.data.global.y - this.stage.position.y);
-    };
-
-    this.stage.mouseup =
-      this.stage.mouseupoutside =
-      this.stage.touchend =
-      this.stage.touchendoutside = data => {
-        this.dragging = false;
-      };
-
-    this.stage.mousemove = this.stage.touchmove = data => {
-      if(!this.dragging) {
-        return;
-      }
-
-      var p = new Point(data.data.global);
-      this.stage.position.x = p.x - this.mousePressPoint.x;
-      this.stage.position.y = p.y - this.mousePressPoint.y;
-
-      this.constrainWorld();
-    };
-
-  }
-
-  zoomIn(p){
-    var zoomPA = this.screenToWorld(p);
-
-    this.zoom = Math.min(this.zoom * 1.5, this.maxZoom);
-    this.stage.scale.x = this.stage.scale.y = this.zoom;
-
-    var zoomPB = this.worldToScreen(p);
-    this.stage.position.x = (zoomPB.x - p.x) / this.zoom;
-    this.stage.position.y = (zoomPB.y - p.y) / this.zoom;
-
-    this.constrainWorld();
-  }
-
-  zoomOut(p){
-    var zoomPA = this.screenToWorld(p);
-
-    this.zoom = Math.max(this.zoom / 1.5, this.minZoom);
-    this.stage.scale.x = this.stage.scale.y = this.zoom;
-
-    var zoomPB = this.worldToScreen(zoomPA);
-    this.stage.position.x = (zoomPB.x - zoomPA.x) / this.zoom;
-    this.stage.position.y = (zoomPB.y - zoomPA.y) / this.zoom;
-
-    this.constrainWorld();
-  }
-
-  screenToWorld(p) {
-    return new Point(
-      this.stage.position.x + p.x / this.zoom,
-      this.stage.position.y + p.y / this.zoom
-    );
-  }
-
-  worldToScreen(p) {
-    return new Point(
-      (p.x - this.stage.position.x) * this.zoom,
-      (p.y - this.stage.position.y) * this.zoom
-    );
-  }
-
-  constrainWorld(){
-    var p = this.stage.position;
-    p.x = Math.min(Math.max(p.x, -1 * this.zoom * this.size.x), 0);
-    p.y = Math.min(Math.max(p.y, -1 * this.zoom * this.size.y), 0);
   }
 
   setTimeLine() {
@@ -188,12 +106,13 @@ export default class World {
       var val = (i * gap * this.maxY) / 100;
 
       var l = new HLine(
-        this.stage,
         new Point(x - 10, y),
         new Point(x - width2, y), {
-          lineColor: '0xffffff',
+          lineColor: '#ffffff',
           text: parseInt(val ? val : 1, 10).toString()
         });
+
+      this.linesH.push(l);
 
     });
   }
@@ -227,13 +146,14 @@ export default class World {
       }
 
       var l = new Line(
-        this.stage,
         new Point(x, y + height),
         new Point(x, y + h), {
-          lineColor: '0xffffff',
+          lineColor: '#ffffff',
           text: cm,
           text2: m2
         });
+
+      this.linesV.push(l);
 
       if (m % 12 === 0){
         year++;
@@ -252,10 +172,24 @@ export default class World {
       this.cVel = this.vel;
       this.nextEntity();
     }
+
+    this.dashboards.forEach( dash => {
+      dash.update(dt);
+    });
+
   }
 
   draw() {
-    this.renderer.render(this.stage);
+
+    this.context.clearRect(0, 0, this.size.x, this.size.y);
+
+    this.linesV.forEach( l => { l.draw(this.context); });
+    this.linesH.forEach( l => { l.draw(this.context); });
+
+    this.dashboards.forEach( dash => {
+      dash.draw(this.context);
+    });
+
   }
 
   nextEntity() {
@@ -274,7 +208,7 @@ export default class World {
 
     var totH = this.size.y - (this.padding.y/2);
     var percHeight = (dash[this.vars.height] * 100)/this.maxY;
-    //var y = totH - (percHeight * this.col.y);
+
     var y = totH - (totH * percHeight / 100);
     var x = (month * this.col.x) + (this.padding.x/2);
 
@@ -284,12 +218,27 @@ export default class World {
       return new Point(p.x + (r * Math.cos(a)), p.y + (r * Math.sin(a)));
     }
 
-    var d = new Dashboard(this.stage, rnd(new Point(x, y), 10), {
-      dash: dash,
-      radius: dash[this.vars.radius]
-    });
+    var pStart = new Point(x, totH);
+    var rStart = 1;
 
-    this.dashboards.set(d.domain, d);
+    var to = rnd(new Point(x, y), 10);
+    var toR = dash[this.vars.radius];
+
+    var d = this.dashboards.get(dash.d);
+    if (d){
+      d.tweenTo({ x: to.x, y: to.y }, toR, 3, 'Quartic.Out');
+    }
+    else {
+
+      d = new Dashboard(pStart, {
+        dash: dash,
+        radius: rStart
+      });
+
+      d.tweenTo({ x: to.x, y: to.y }, toR, 3, 'Quartic.Out');
+
+      this.dashboards.set(dash.d, d);
+    }
 
     this.entityIndex++;
   }
