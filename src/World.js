@@ -61,16 +61,20 @@ export default class World {
 
     this.container.appendChild(this.canvas);
 
-    var grd = this.context.createLinearGradient(0, 0, canvas.width, canvas.height);
-    grd.addColorStop(0, '#F161A3');
-    grd.addColorStop(1, '#4939E4');
+    if (/Firefox/i.test(navigator.userAgent)){
+      //if firefox > don't use Gradient, it's too slow for animations
+      this.gradient = '#713FCA';
+    }
+    else {
+
+      var grd = this.context.createLinearGradient(0, 0, canvas.width, canvas.height);
+      grd.addColorStop(0, '#F161A3');
+      grd.addColorStop(1, '#4939E4');
+
+      this.gradient = grd;
+    }
 
     this.context.globalCompositeOperation = 'darker';
-
-    //grd.addColorStop(0, 'rgb(227, 99, 150)');
-    //grd.addColorStop(1, 'rgb(103, 71, 218)');
-
-    this.gradient = grd;
 
     this.setTimeLine();
   }
@@ -252,7 +256,8 @@ export default class World {
 
     var ctx = this.context;
 
-    ctx.clearRect(0, 0, this.size.x, this.size.y);
+    //ctx.clearRect(0, 0, this.size.x, this.size.y);
+    this.canvas.width = this.canvas.width; // better clear
 
     ctx.globalAlpha = 0.7;
 
