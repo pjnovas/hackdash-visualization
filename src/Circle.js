@@ -16,6 +16,7 @@ export default class Circle {
     this.tweenRadius = null;
 
     this.hover = false;
+    this.d360 = 2 * Math.PI;
   }
 
   tweenTo(pos, radius, duration, easing) {
@@ -99,7 +100,7 @@ export default class Circle {
 
     if (this.tweenRadius){
       this.tweenRadius.update(acc);
-      this.radius = parseInt(this.radius, 10);
+      this.radius = window.f(this.radius);
     }
 
     this.mouseEvents();
@@ -107,19 +108,24 @@ export default class Circle {
 
   draw(ctx) {
 
-    ctx.globalAlpha = this.alpha || 0.8;
-
     ctx.beginPath();
 
-    ctx.arc(this.position.x, this.position.y, this.radius, 0, 2 * Math.PI, false);
+    var r = window.f;
+
+    ctx.arc(r(this.position.x), r(this.position.y), this.radius, 0, this.d360, false);
     ctx.fillStyle = this.fillColor;
 
     ctx.fill();
 
     if (this.lineSize) {
+      ctx.save();
+
+      ctx.globalAlpha = 1;
       ctx.lineWidth = this.lineSize;
       ctx.strokeStyle = this.lineColor;
       ctx.stroke();
+
+      ctx.restore();
     }
 
   }

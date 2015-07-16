@@ -18,7 +18,7 @@ export default class Line {
 
   draw(ctx){
 
-    ctx.globalAlpha = this.alpha || 1;
+    //ctx.globalAlpha = this.alpha || 1;
 
     ctx.beginPath();
     ctx.moveTo(this.from.x, this.from.y);

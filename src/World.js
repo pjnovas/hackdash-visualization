@@ -7,6 +7,10 @@ import Dashboard from './Dashboard';
 import Line from './Line';
 import HLine from './HLine';
 
+var colors = {
+  lines: '#666'
+};
+
 export default class World {
 
   constructor(container, data, options) {
@@ -41,8 +45,6 @@ export default class World {
     this.vars[type] = value;
 
     this.entityIndex = 0;
-    this.linesV = [];
-    this.linesH = [];
     this.setTimeLine();
   }
 
@@ -50,6 +52,7 @@ export default class World {
 
     var canvas = document.createElement('canvas');
 
+    //canvas.setAttribute("moz-opaque", true);
     canvas.width = this.size.x;
     canvas.height = this.size.y;
 
@@ -57,6 +60,17 @@ export default class World {
     this.context = canvas.getContext('2d');
 
     this.container.appendChild(this.canvas);
+
+    var grd = this.context.createLinearGradient(0, 0, canvas.width, canvas.height);
+    grd.addColorStop(0, '#F161A3');
+    grd.addColorStop(1, '#4939E4');
+
+    this.context.globalCompositeOperation = 'darker';
+
+    //grd.addColorStop(0, 'rgb(227, 99, 150)');
+    //grd.addColorStop(1, 'rgb(103, 71, 218)');
+
+    this.gradient = grd;
 
     this.setTimeLine();
   }
@@ -94,9 +108,13 @@ export default class World {
   createHeightBars() {
     var gap = 20;
     var times = 100 / gap;
-    var x = parseInt(this.padding.x/2, 10);
     var width = 30, width2 = width*2;
     var totH = this.size.y - (this.padding.y/2);
+
+    var canvasW = this.padding.x/2;
+    var x = canvasW;
+
+    this.linesH = [];
 
     _.times(times, (i) => {
 
@@ -107,24 +125,55 @@ export default class World {
       var l = new HLine(
         new Point(x - 10, y),
         new Point(x - width2, y), {
-          lineColor: '#ffffff',
+          lineColor: colors.lines,
           text: parseInt(val ? val : 1, 10).toString()
         });
 
       this.linesH.push(l);
 
     });
+
+    if (!this.contextHeightBar){
+
+      // create a Canvas for the bar
+      var canvas = document.createElement('canvas');
+      canvas.width = canvasW;
+      canvas.height = this.size.y;
+
+      canvas.style.position = 'absolute';
+      canvas.style.top = 0;
+      canvas.style.left = 0;
+      canvas.style.zIndex = 2;
+
+      this.contextHeightBar = canvas.getContext('2d');
+      this.container.appendChild(canvas);
+    }
+
+    // draw
+    this.contextHeightBar.clearRect(0, 0, canvasW, this.size.y);
+    this.linesH.forEach( l => { l.draw(this.contextHeightBar); });
+
   }
 
   createTimeBars() {
+
+    if (this.contextTimeBar){
+      // draw only once
+      return;
+    }
+
     var halfPadX = this.padding.x/2;
-    var y = parseInt(this.size.y - (this.padding.y/2), 10);
     var height = 10, height2 = height*2;
 
     var fMonth = this.startMonth;
     var year = this.startYear;
     var lastYear = 0;
     var cMonth = fMonth;
+
+    var canvasH = this.padding.y/2;
+    var y = 0; //parseInt(this.size.y - (canvasH), 10);
+
+    this.linesV = [];
 
     _.times(this.months, (i) => {
       var x = parseInt((i * this.col.x) + halfPadX, 10);
@@ -147,7 +196,7 @@ export default class World {
       var l = new Line(
         new Point(x, y + height),
         new Point(x, y + h), {
-          lineColor: '#ffffff',
+          lineColor: colors.lines,
           text: cm,
           text2: m2
         });
@@ -161,6 +210,27 @@ export default class World {
 
       cMonth++;
     });
+
+    if (!this.contextTimeBar){
+
+      // create a Canvas for the bar
+      var canvas = document.createElement('canvas');
+      canvas.width = this.size.x;
+      canvas.height = canvasH;
+
+      canvas.style.position = 'absolute';
+      canvas.style.bottom = 0;
+      canvas.style.left = 0;
+      canvas.style.zIndex = 3;
+
+      this.contextTimeBar = canvas.getContext('2d');
+      this.container.appendChild(canvas);
+    }
+
+    // draw
+    this.contextTimeBar.clearRect(0, 0, this.size.x, canvasH);
+    this.linesV.forEach( l => { l.draw(this.contextTimeBar); });
+
   }
 
   update(dt) {
@@ -180,13 +250,14 @@ export default class World {
 
   draw() {
 
-    this.context.clearRect(0, 0, this.size.x, this.size.y);
+    var ctx = this.context;
 
-    this.linesV.forEach( l => { l.draw(this.context); });
-    this.linesH.forEach( l => { l.draw(this.context); });
+    ctx.clearRect(0, 0, this.size.x, this.size.y);
+
+    ctx.globalAlpha = 0.7;
 
     this.dashboards.forEach( dash => {
-      dash.draw(this.context);
+      dash.draw(ctx);
     });
 
   }
@@ -228,7 +299,9 @@ export default class World {
 
       d = new Dashboard(pStart, {
         dash: dash,
-        radius: rStart
+        radius: rStart,
+        fillColor: this.gradient,
+        lineColor: colors.lines
       });
 
       this.dashboards.set(dash.d, d);

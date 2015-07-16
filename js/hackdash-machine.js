@@ -23094,6 +23094,7 @@ var Circle = (function () {
     this.tweenRadius = null;
 
     this.hover = false;
+    this.d360 = 2 * Math.PI;
   }
 
   _createClass(Circle, [{
@@ -23184,7 +23185,7 @@ var Circle = (function () {
 
       if (this.tweenRadius) {
         this.tweenRadius.update(acc);
-        this.radius = parseInt(this.radius, 10);
+        this.radius = window.f(this.radius);
       }
 
       this.mouseEvents();
@@ -23193,19 +23194,24 @@ var Circle = (function () {
     key: 'draw',
     value: function draw(ctx) {
 
-      ctx.globalAlpha = this.alpha || 0.8;
-
       ctx.beginPath();
 
-      ctx.arc(this.position.x, this.position.y, this.radius, 0, 2 * Math.PI, false);
+      var r = window.f;
+
+      ctx.arc(r(this.position.x), r(this.position.y), this.radius, 0, this.d360, false);
       ctx.fillStyle = this.fillColor;
 
       ctx.fill();
 
       if (this.lineSize) {
+        ctx.save();
+
+        ctx.globalAlpha = 1;
         ctx.lineWidth = this.lineSize;
         ctx.strokeStyle = this.lineColor;
         ctx.stroke();
+
+        ctx.restore();
       }
     }
   }]);
@@ -23251,12 +23257,6 @@ var _Circle3 = _interopRequireDefault(_Circle2);
 var Dashboard = (function (_Circle) {
   function Dashboard(pos, options) {
     _classCallCheck(this, Dashboard);
-
-    var c = (0, _color2['default'])('#DE8D14');
-    c.saturate(pos.y / 1000);
-    c.luminosity(pos.y / 1000);
-
-    options.fillColor = c.hexString();
 
     _get(Object.getPrototypeOf(Dashboard.prototype), 'constructor', this).call(this, pos, options);
     this.dash = options.dash;
@@ -23319,7 +23319,7 @@ var HLine = (function () {
     key: 'draw',
     value: function draw(ctx) {
 
-      ctx.globalAlpha = this.alpha || 1;
+      //ctx.globalAlpha = this.alpha || 1;
 
       ctx.beginPath();
       ctx.moveTo(this.from.x, this.from.y);
@@ -23500,7 +23500,7 @@ var Line = (function () {
     key: 'draw',
     value: function draw(ctx) {
 
-      ctx.globalAlpha = this.alpha || 1;
+      //ctx.globalAlpha = this.alpha || 1;
 
       ctx.beginPath();
       ctx.moveTo(this.from.x, this.from.y);
@@ -23713,6 +23713,10 @@ var _HLine = require('./HLine');
 
 var _HLine2 = _interopRequireDefault(_HLine);
 
+var colors = {
+  lines: '#666'
+};
+
 var World = (function () {
   function World(container, data, options) {
     _classCallCheck(this, World);
@@ -23749,8 +23753,6 @@ var World = (function () {
       this.vars[type] = value;
 
       this.entityIndex = 0;
-      this.linesV = [];
-      this.linesH = [];
       this.setTimeLine();
     }
   }, {
@@ -23759,6 +23761,7 @@ var World = (function () {
 
       var canvas = document.createElement('canvas');
 
+      //canvas.setAttribute("moz-opaque", true);
       canvas.width = this.size.x;
       canvas.height = this.size.y;
 
@@ -23766,6 +23769,17 @@ var World = (function () {
       this.context = canvas.getContext('2d');
 
       this.container.appendChild(this.canvas);
+
+      var grd = this.context.createLinearGradient(0, 0, canvas.width, canvas.height);
+      grd.addColorStop(0, '#F161A3');
+      grd.addColorStop(1, '#4939E4');
+
+      this.context.globalCompositeOperation = 'darker';
+
+      //grd.addColorStop(0, 'rgb(227, 99, 150)');
+      //grd.addColorStop(1, 'rgb(103, 71, 218)');
+
+      this.gradient = grd;
 
       this.setTimeLine();
     }
@@ -23807,10 +23821,14 @@ var World = (function () {
 
       var gap = 20;
       var times = 100 / gap;
-      var x = parseInt(this.padding.x / 2, 10);
       var width = 30,
           width2 = width * 2;
       var totH = this.size.y - this.padding.y / 2;
+
+      var canvasW = this.padding.x / 2;
+      var x = canvasW;
+
+      this.linesH = [];
 
       _lodash2['default'].times(times, function (i) {
 
@@ -23819,11 +23837,33 @@ var World = (function () {
         var val = i * gap * _this2.maxY / 100;
 
         var l = new _HLine2['default'](new _point2js2['default'](x - 10, y), new _point2js2['default'](x - width2, y), {
-          lineColor: '#ffffff',
+          lineColor: colors.lines,
           text: parseInt(val ? val : 1, 10).toString()
         });
 
         _this2.linesH.push(l);
+      });
+
+      if (!this.contextHeightBar) {
+
+        // create a Canvas for the bar
+        var canvas = document.createElement('canvas');
+        canvas.width = canvasW;
+        canvas.height = this.size.y;
+
+        canvas.style.position = 'absolute';
+        canvas.style.top = 0;
+        canvas.style.left = 0;
+        canvas.style.zIndex = 2;
+
+        this.contextHeightBar = canvas.getContext('2d');
+        this.container.appendChild(canvas);
+      }
+
+      // draw
+      this.contextHeightBar.clearRect(0, 0, canvasW, this.size.y);
+      this.linesH.forEach(function (l) {
+        l.draw(_this2.contextHeightBar);
       });
     }
   }, {
@@ -23831,8 +23871,12 @@ var World = (function () {
     value: function createTimeBars() {
       var _this3 = this;
 
+      if (this.contextTimeBar) {
+        // draw only once
+        return;
+      }
+
       var halfPadX = this.padding.x / 2;
-      var y = parseInt(this.size.y - this.padding.y / 2, 10);
       var height = 10,
           height2 = height * 2;
 
@@ -23840,6 +23884,11 @@ var World = (function () {
       var year = this.startYear;
       var lastYear = 0;
       var cMonth = fMonth;
+
+      var canvasH = this.padding.y / 2;
+      var y = 0; //parseInt(this.size.y - (canvasH), 10);
+
+      this.linesV = [];
 
       _lodash2['default'].times(this.months, function (i) {
         var x = parseInt(i * _this3.col.x + halfPadX, 10);
@@ -23860,7 +23909,7 @@ var World = (function () {
         }
 
         var l = new _Line2['default'](new _point2js2['default'](x, y + height), new _point2js2['default'](x, y + h), {
-          lineColor: '#ffffff',
+          lineColor: colors.lines,
           text: cm,
           text2: m2
         });
@@ -23873,6 +23922,28 @@ var World = (function () {
         }
 
         cMonth++;
+      });
+
+      if (!this.contextTimeBar) {
+
+        // create a Canvas for the bar
+        var canvas = document.createElement('canvas');
+        canvas.width = this.size.x;
+        canvas.height = canvasH;
+
+        canvas.style.position = 'absolute';
+        canvas.style.bottom = 0;
+        canvas.style.left = 0;
+        canvas.style.zIndex = 3;
+
+        this.contextTimeBar = canvas.getContext('2d');
+        this.container.appendChild(canvas);
+      }
+
+      // draw
+      this.contextTimeBar.clearRect(0, 0, this.size.x, canvasH);
+      this.linesV.forEach(function (l) {
+        l.draw(_this3.contextTimeBar);
       });
     }
   }, {
@@ -23893,19 +23964,15 @@ var World = (function () {
   }, {
     key: 'draw',
     value: function draw() {
-      var _this4 = this;
 
-      this.context.clearRect(0, 0, this.size.x, this.size.y);
+      var ctx = this.context;
 
-      this.linesV.forEach(function (l) {
-        l.draw(_this4.context);
-      });
-      this.linesH.forEach(function (l) {
-        l.draw(_this4.context);
-      });
+      ctx.clearRect(0, 0, this.size.x, this.size.y);
+
+      ctx.globalAlpha = 0.7;
 
       this.dashboards.forEach(function (dash) {
-        dash.draw(_this4.context);
+        dash.draw(ctx);
       });
     }
   }, {
@@ -23948,7 +24015,9 @@ var World = (function () {
 
         d = new _Dashboard2['default'](pStart, {
           dash: dash,
-          radius: rStart
+          radius: rStart,
+          fillColor: this.gradient,
+          lineColor: colors.lines
         });
 
         this.dashboards.set(dash.d, d);
@@ -24037,8 +24106,13 @@ var _moment = require('moment');
 var _moment2 = _interopRequireDefault(_moment);
 
 _hbsfyRuntime2['default'].registerHelper('parseDate', function (unixTime) {
-  return _moment2['default'].unix(unixTime).format('DD MM YYYY');
+  return _moment2['default'].unix(unixTime).format('DD/MM/YYYY');
 });
+
+// helper function to round floats before drawing
+window.f = function (v) {
+  return Math.floor(v);
+};
 
 },{"babel-core/polyfill":"/home/pjnovas/projects/hackdash-machine/node_modules/babel-core/polyfill.js","hbsfy/runtime":"/home/pjnovas/projects/hackdash-machine/node_modules/hbsfy/runtime.js","moment":"/home/pjnovas/projects/hackdash-machine/node_modules/moment/moment.js"}],"/home/pjnovas/projects/hackdash-machine/src/templates/dashboard.hbs":[function(require,module,exports){
 // hbsfy compiled Handlebars template
@@ -24060,13 +24134,13 @@ module.exports = HandlebarsCompiler.template({"1":function(depth0,helpers,partia
 
   return "<div class=\"header\">\n  <h2>\n"
     + ((stack1 = helpers['if'].call(depth0,(depth0 != null ? depth0.n : depth0),{"name":"if","hash":{},"fn":this.program(1, data, 0),"inverse":this.program(3, data, 0),"data":data})) != null ? stack1 : "")
-    + "  </h2>\n</div>\n<div class=\"body\">\n  <div class=\"field\">\n    <label>People: </label>\n    <span>"
+    + "  </h2>\n</div>\n<div class=\"body\">\n  <div class=\"field left\">\n    <label>People</label>\n    <span>"
     + alias3(((helper = (helper = helpers.us || (depth0 != null ? depth0.us : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"us","hash":{},"data":data}) : helper)))
-    + "</span>\n  </div>\n  <div class=\"field\">\n    <label>Projects: </label>\n    <span>"
+    + "</span>\n  </div>\n  <div class=\"field right\">\n    <label>Projects</label>\n    <span>"
     + alias3(((helper = (helper = helpers.pc || (depth0 != null ? depth0.pc : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"pc","hash":{},"data":data}) : helper)))
-    + "</span>\n  </div>\n  <div class=\"field\">\n    <label>Created: </label>\n    <span>"
+    + "</span>\n  </div>\n</div>\n\n<div class=\"footer\">\n  <span>"
     + alias3((helpers.parseDate || (depth0 && depth0.parseDate) || alias1).call(depth0,(depth0 != null ? depth0.t : depth0),{"name":"parseDate","hash":{},"data":data}))
-    + "</span>\n  </div>\n</div>\n\n";
+    + "</span>\n</div>\n\n";
 },"useData":true});
 
 },{"hbsfy/runtime":"/home/pjnovas/projects/hackdash-machine/node_modules/hbsfy/runtime.js"}]},{},["/home/pjnovas/projects/hackdash-machine/src/index.js"]);
