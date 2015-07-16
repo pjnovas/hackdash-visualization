@@ -27,9 +27,33 @@ module.exports = function (grunt) {
       }
     },
 
+    copy: {
+      dist: {
+        files: [
+          {
+            expand: true,
+            cwd: './',
+            src: [
+              'js/<%= pkg.name %>.js',
+              'css/<%= pkg.name %>.css',
+              'dashboards.json',
+              'index.html'
+            ],
+            dest: 'dist/',
+            rename: function(dest, src) {
+              return dest + src;
+            }
+          }
+        ]
+      }
+    }
+
   });
 
   grunt.loadNpmTasks("grunt-browserify");
+  grunt.loadNpmTasks("grunt-contrib-copy");
+
   grunt.registerTask("default", "browserify");
+  grunt.registerTask("dist", "copy:dist");
 
 };
