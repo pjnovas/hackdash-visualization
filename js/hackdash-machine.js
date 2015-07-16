@@ -24064,7 +24064,7 @@ httpReq.onreadystatechange = function () {
   }
 };
 
-httpReq.open('GET', '/dashboards.json', true);
+httpReq.open('GET', 'https://raw.githubusercontent.com/pjnovas/hackdash-visualization/gh-pages/dashboards.json', true);
 httpReq.send();
 
 function init(data) {
