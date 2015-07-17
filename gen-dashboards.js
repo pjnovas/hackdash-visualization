@@ -35,6 +35,10 @@ Dashboard
           n: dashboard.title || '',
           pc: dashboard.projectsCount,
           t: moment(dashboard.created_at).unix(),
+          //ads: admins
+          //ps: people
+          //us: people count (inc admins)
+          //rels: dashboard domains as child nodes by common people
         };
 
         async.waterfall([
@@ -72,6 +76,7 @@ Dashboard
             });
 
             // set people count including admins and contributors
+            dash.ps = people;
             dash.us = people.length + dash.ads.length;
             done();
           },
@@ -87,10 +92,28 @@ Dashboard
     async.series(series, function(err, dashboards){
       if (err) throw err;
 
-      //console.dir(dashboards);
-
       dashboards.sort(function(a, b){
         return a.t - b.t;
+      });
+
+      // build relations
+      dashboards.forEach(function(dash){
+        dash.rels = [];
+
+        function findChilds(uid){
+          var founds = _.filter(dashboards, function(d){
+            return (d.ps.indexOf(uid) > -1 || d.ads.indexOf(uid) > -1);
+          });
+
+          return _.pluck(founds, 'd')  || [];
+        }
+
+        dash.ps.concat(dash.ads).forEach(function(uid){
+          dash.rels = dash.rels.concat(findChilds(uid));
+        });
+
+        // all domains once without the current
+        dash.rels = _.without(_.uniq(dash.rels), dash.d);
       });
 
       jf.writeFile(path, dashboards, function(err){
