@@ -5,10 +5,12 @@ import _ from 'lodash';
 
 import Dashboard from './Dashboard';
 import Line from './Line';
+import VLine from './VLine';
 import HLine from './HLine';
 
 var colors = {
-  lines: '#666'
+  lines: '#666',
+  relLines: '#777'
 };
 
 export default class World {
@@ -22,9 +24,6 @@ export default class World {
 
     this.padding = new Point(150, 150);
 
-    this.vel = options && options.vel || 0; //0.15;
-    this.cVel = this.vel;
-
     this.entityIndex = 0;
 
     this.zoom = 1;
@@ -34,6 +33,10 @@ export default class World {
     this.dashboards = new Map();
     this.linesV = [];
     this.linesH = [];
+    this.relationLines = [];
+    this.hideRelsLines = false;
+    this.nonRelsHidden = false;
+    this.dashShowingRels = null;
 
     this.vars = {
       radius: 'us',
@@ -197,7 +200,7 @@ export default class World {
         cm = '';
       }
 
-      var l = new Line(
+      var l = new VLine(
         new Point(x, y + height),
         new Point(x, y + h), {
           lineColor: colors.lines,
@@ -239,12 +242,7 @@ export default class World {
 
   update(dt) {
 
-    this.cVel -= dt;
-
-    if (this.cVel <= 0){
-      this.cVel = this.vel;
-      this.nextEntity();
-    }
+    this.nextEntity();
 
     this.dashboards.forEach( dash => {
       dash.update(dt);
@@ -259,11 +257,19 @@ export default class World {
     //ctx.clearRect(0, 0, this.size.x, this.size.y);
     this.canvas.width = this.canvas.width; // better clear
 
-    ctx.globalAlpha = 0.7;
+    if (!this.hideRelsLines){
+      ctx.save();
+      this.relationLines.forEach( line => {
+        if (line) line.draw(ctx);
+      });
+      ctx.restore();
+    }
 
+    ctx.save();
     this.dashboards.forEach( dash => {
       dash.draw(ctx);
     });
+    ctx.restore();
 
   }
 
@@ -306,15 +312,109 @@ export default class World {
         dash: dash,
         radius: rStart,
         fillColor: this.gradient,
-        lineColor: colors.lines
+        lineColor: colors.lines,
+        alpha: 0.7
       });
 
       this.dashboards.set(dash.d, d);
     }
 
-    d.tweenTo({ x: to.x, y: to.y }, toR, 3, 'Quartic.Out');
+    d.tweenTo({ x: to.x, y: to.y }, toR, 1, 'Quartic.Out');
 
     this.entityIndex++;
+  }
+
+  showRelations(dashboard) {
+
+    this.dashShowingRels = dashboard;
+    this.relationLines = [];
+    var p1 = dashboard.position;
+
+    dashboard.dash.rels.forEach( domain => {
+
+      var dash = this.dashboards.get(domain);
+
+      if (dash){
+
+        var l = new Line(p1, dash.position, {
+          lineColor: colors.relLines,
+          lineSize: 1,
+          alpha: 0.7
+        });
+
+      }
+
+      this.relationLines.push(l);
+    });
+
+    this.hideRelsLines = false;
+    this.showAll();
+    this.toggleRelDOM();
+  }
+
+  toggleRelDOM(show) {
+    var container = document.querySelector('.relations');
+    container.style.display = window.dselected ? 'block' : 'none';
+
+    if (window.dselected){
+      var cap = document.querySelector('.relations-label');
+      var s = this.dashShowingRels;
+      cap.innerHTML = s.dash.d + ' [' + s.dash.rels.length + ']';
+      cap.href = 'https://hackdash.org/dashboards/' + s.dash.d;
+      cap.title = s.dash.rels.length + ' Relations. Click to open dashboard';
+    }
+  }
+
+  toggleRelOthersDOM(show){
+    var toggleRel = document.getElementById('toggle-relations');
+    toggleRel.innerHTML = this.nonRelsHidden ? 'show others':'hide others';
+  }
+
+  toggleLinesDOM() {
+    var toggleRelLines = document.getElementById('toggle-rel-lines');
+    toggleRelLines.innerHTML = this.hideRelsLines ? 'show lines':'hide lines';
+  }
+
+  fallNonRels(){
+
+    if (!this.dashShowingRels) return;
+
+    var i = 0;
+    this.dashboards.forEach( (dash) => {
+      if (this.dashShowingRels.dash.d !== dash.dash.d &&
+        this.dashShowingRels.dash.rels.indexOf(dash.dash.d) === -1){
+        dash.hide(i);
+      }
+      i++;
+    });
+
+    this.nonRelsHidden = true;
+    this.toggleRelOthersDOM();
+  }
+
+  showAll(){
+    var i = 0;
+    this.dashboards.forEach( dash => {
+      if (dash.hidden) dash.show(i);
+      i++;
+    });
+
+    this.nonRelsHidden = false;
+    this.toggleRelOthersDOM();
+    this.toggleLinesDOM();
+  }
+
+  toggleRelLines() {
+    this.hideRelsLines = !this.hideRelsLines;
+    this.toggleLinesDOM();
+  }
+
+  clearRelations(){
+    this.dashShowingRels = null;
+    this.relationLines = [];
+    this.hideRelsLines = false;
+    this.showAll();
+    this.toggleRelDOM();
   }
 
 };

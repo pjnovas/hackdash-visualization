@@ -5,11 +5,9 @@ export default class Line {
     this.from = posA;
     this.to = posB;
 
-    this.text = options.text;
-    this.text2 = options.text2;
-
     this.lineColor = options.lineColor || '#ffffff';
-    this.lineSize = 2;
+    this.lineSize = options.lineSize || 2;
+    this.alpha = options.alpha;
   }
 
   update(dt) {
@@ -18,7 +16,9 @@ export default class Line {
 
   draw(ctx){
 
-    //ctx.globalAlpha = this.alpha || 1;
+    if (this.alpha){
+      ctx.globalAlpha = this.alpha || 1;
+    }
 
     ctx.beginPath();
     ctx.moveTo(this.from.x, this.from.y);
@@ -26,18 +26,6 @@ export default class Line {
     ctx.lineWidth = this.lineSize;
     ctx.strokeStyle = this.lineColor;
     ctx.stroke();
-
-    ctx.font = '16px monospace';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
-    ctx.fillStyle = this.lineColor;
-    ctx.fillText(this.text, this.to.x, this.to.y);
-
-    ctx.font = '16px monospace';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'bottom';
-    ctx.fillStyle = this.lineColor;
-    ctx.fillText(this.text2, this.to.x + 10, this.to.y);
 
   }
 

@@ -44,16 +44,27 @@ export default class Input {
     if (!this.enabled) return;
     this.updatePosition(e);
     this.isDown = false;
+    this._clicked = false;
   }
 
   onmousedown(e){
     if (!this.enabled) return;
     this.updatePosition(e);
     this.isDown = true;
+    this._clicked = true;
   }
 
   onmousemove(e){
     this.updatePosition(e);
+  }
+
+  update(dt){
+    if (this._clicked && this.isDown){
+      window.popover.hide();
+      window.dselected = false;
+      this._clicked = false;
+      window.world.clearRelations();
+    }
   }
 
   getEventPosition(e){

@@ -12,7 +12,7 @@ httpReq.onreadystatechange = () => {
   }
 };
 
-httpReq.open("GET", "/dashboards.json", true);
+httpReq.open("GET", "/js/dashboards.json", true);
 httpReq.send();
 
 function init(data){
@@ -37,6 +37,21 @@ function init(data){
   height.addEventListener('change', e => {
     var val = height.options[height.selectedIndex].value;
     window.machine.changeMetric('height', val);
+  });
+
+  var toggleRel = document.getElementById('toggle-relations');
+  toggleRel.addEventListener('click', e => {
+    window.machine.toggleNonRel();
+  });
+
+  var toggleRelLines = document.getElementById('toggle-rel-lines');
+  toggleRelLines.addEventListener('click', e => {
+    window.machine.toggleRelLines();
+  });
+
+  var help = document.getElementById('help');
+  help.addEventListener('click', e => {
+    window.alert('Shows people inside one dashboard on which other dashboards are also in.');
   });
 
   window.machine.start();

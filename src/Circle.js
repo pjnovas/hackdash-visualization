@@ -17,9 +17,10 @@ export default class Circle {
 
     this.hover = false;
     this.d360 = 2 * Math.PI;
+    this.alpha = options.alpha || 1;
   }
 
-  tweenTo(pos, radius, duration, easing) {
+  tweenTo(pos, radius, duration, easing, delay) {
     this.clearTween('tweenPos');
     this.clearTween('tweenRadius');
 
@@ -31,6 +32,10 @@ export default class Circle {
     var t = duration*1000;
 
     this.tweenPos = new TWEEN.Tween(this.position).to(pos, t).easing(easing);
+    if (delay){
+      this.tweenPos.delay(delay*1000);
+    }
+
     this.tweenPos.onComplete(() => { this.clearTween('tweenPos'); });
     this.tweenPos.start(0);
 
@@ -110,6 +115,8 @@ export default class Circle {
 
     ctx.beginPath();
 
+    ctx.globalAlpha = this.alpha;
+
     var r = window.f;
 
     ctx.arc(r(this.position.x), r(this.position.y), this.radius, 0, this.d360, false);
@@ -120,7 +127,6 @@ export default class Circle {
     if (this.lineSize) {
       ctx.save();
 
-      ctx.globalAlpha = 1;
       ctx.lineWidth = this.lineSize;
       ctx.strokeStyle = this.lineColor;
       ctx.stroke();

@@ -1,6 +1,6 @@
 var mongoose = require('mongoose')
   , jf = require('jsonfile')
-  , path = __dirname + '/dashboards.json'
+  , path = __dirname + '/js/dashboards.json'
   , moment = require("moment")
   , _ = require('lodash')
   , async = require('async');
@@ -39,6 +39,7 @@ Dashboard
           //ps: people
           //us: people count (inc admins)
           //rels: dashboard domains as child nodes by common people
+          //rc: rels count
         };
 
         async.waterfall([
@@ -114,6 +115,7 @@ Dashboard
 
         // all domains once without the current
         dash.rels = _.without(_.uniq(dash.rels), dash.d);
+        dash.rc = dash.rels.length;
       });
 
       jf.writeFile(path, dashboards, function(err){

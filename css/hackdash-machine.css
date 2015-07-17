@@ -127,6 +127,7 @@ canvas {
     box-shadow: 1px 1px 2px rgba(0,0,0,0.55);
     color: #111;
     padding: 0;
+    z-index: 500;
 }
 
 #popover .header {
@@ -198,7 +199,34 @@ canvas {
     color: #111;
 }
 
+.relations {
+    display: block;
+    margin-top: 10px;
+    border-top: 1px solid silver;
+    padding-top: 5px;
+    position: relative;
+}
 
+.relations a {
+    display: block;
+    color: #111;
+    text-decoration: none;
+}
+
+.relations a:hover {
+    text-decoration: underline;
+    color: #111;
+}
+
+#help {
+    display: inline;
+    position: absolute;
+    right: 0;
+    top: 5px;
+    background: rgb(0, 181, 255);
+    padding: 0 5px;
+    color: white;
+}
 
 /* ==========================================================================
    Helper classes
