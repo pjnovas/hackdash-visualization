@@ -21258,7 +21258,7 @@ var Circle = (function () {
 
   _createClass(Circle, [{
     key: 'tweenTo',
-    value: function tweenTo(pos, radius, duration, easing, delay) {
+    value: function tweenTo(pos, radius, duration, easing, delay, done) {
       var _this = this;
 
       this.clearTween('tweenPos');
@@ -21278,7 +21278,9 @@ var Circle = (function () {
 
       this.tweenPos.onComplete(function () {
         _this.clearTween('tweenPos');
+        done && done();
       });
+
       this.tweenPos.start(0);
 
       if (this.radius !== radius) {
@@ -21306,16 +21308,9 @@ var Circle = (function () {
 
       if (this.isPointInside(mouse.position)) {
 
-        if (!this.hover) {
-          this.lineSize = 5;
-          this.hover = true;
-          this.onOver();
-        }
-
-        if (mouse.isDown) {
-          this.onClick();
-          mouse.isDown = false; // hack > fire click on only first match
-        }
+        this.lineSize = 5;
+        this.hover = true;
+        this.onOver();
       } else if (this.hover) {
         this.lineSize = 0;
         this.hover = false;
@@ -21414,6 +21409,10 @@ var _Circle2 = require('./Circle');
 
 var _Circle3 = _interopRequireDefault(_Circle2);
 
+var _point2js = require('point2js');
+
+var _point2js2 = _interopRequireDefault(_point2js);
+
 var Dashboard = (function (_Circle) {
   _inherits(Dashboard, _Circle);
 
@@ -21439,22 +21438,34 @@ var Dashboard = (function (_Circle) {
   }, {
     key: 'onOut',
     value: function onOut() {
-      window.popover.hide();
+      window.popover.hide(this.dash);
+    }
+  }, {
+    key: 'setPos',
+    value: function setPos(to, toR) {
+      this.showPos = new _point2js2['default'](to).clone();
+      if (!this.hidden) {
+        this.tweenTo({ x: to.x, y: to.y }, toR, 1, 'Quartic.Out');
+      }
     }
   }, {
     key: 'hide',
     value: function hide(idx) {
-      var delay = idx >= 0 ? idx * 0.001 : null;
+      if (!this.hidden) {
+        var delay = idx >= 0 ? idx * 0.001 : null;
 
-      this.prevPos = this.position.clone();
-      this.tweenTo({ y: world.size.y + this.radius }, null, 1, 'Back.In', delay);
-      this.hidden = true;
+        this.tweenTo({ y: world.size.y + this.radius }, null, 1, 'Back.In', delay);
+        this.hidden = true;
+      }
     }
   }, {
     key: 'show',
     value: function show(idx) {
-      var delay = idx >= 0 ? idx * 0.001 : null;
-      this.tweenTo({ y: this.prevPos.y }, null, 1, 'Back.Out', delay);
+      if (this.hidden) {
+        var delay = idx >= 0 ? idx * 0.001 : null;
+        this.tweenTo({ y: this.showPos.y }, null, 1, 'Back.Out', delay);
+        this.hidden = false;
+      }
     }
   }]);
 
@@ -21465,7 +21476,7 @@ exports['default'] = Dashboard;
 ;
 module.exports = exports['default'];
 
-},{"./Circle":"/home/pjnovas/projects/hackdash-machine/src/Circle.js"}],"/home/pjnovas/projects/hackdash-machine/src/HLine.js":[function(require,module,exports){
+},{"./Circle":"/home/pjnovas/projects/hackdash-machine/src/Circle.js","point2js":"/home/pjnovas/projects/hackdash-machine/node_modules/point2js/lib/point2js.js"}],"/home/pjnovas/projects/hackdash-machine/src/HLine.js":[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -21619,6 +21630,9 @@ var Input = (function () {
         window.dselected = false;
         this._clicked = false;
         window.world.clearRelations();
+      } else if (this.isDown) {
+        window.popover.select();
+        this.isDown = false;
       }
     }
   }, {
@@ -21764,21 +21778,6 @@ exports['default'] = function (options) {
     return world.changeMetric(type, value);
   };
 
-  // Relations toggle
-  function isHidingNonRels() {
-    return world.nonRelsHidden;
-  }
-
-  game.toggleNonRel = function () {
-    if (isHidingNonRels()) {
-      world.showAll();
-    } else {
-      world.fallNonRels();
-    }
-  };
-
-  game.isShowingRels = isHidingNonRels;
-
   game.toggleRelLines = function () {
     world.toggleRelLines();
   };
@@ -21815,49 +21814,72 @@ var Popover = (function () {
 
     this.container = options.container;
     this.container.style.display = 'none';
+
+    this.showing = null;
+    this.showingId = null;
   }
 
   _createClass(Popover, [{
+    key: 'select',
+    value: function select() {
+      if (this.showing) {
+        this.showing.onClick();
+      }
+    }
+  }, {
     key: 'show',
     value: function show(obj, data) {
-      var _this = this;
+      if (this.showingId !== data.d) {
+        this.showing = obj;
+        this.showingId = data.d;
+        var css = this.container.style;
 
-      var css = this.container.style;
+        if (data.d === this.currentD && css.display === 'block') {
+          return;
+        }
 
-      if (data.d === this.currentD && css.display === 'block') {
-        return;
+        this.currentD = data.d;
+        css.display = 'block';
+
+        this.container.innerHTML = (0, _templatesDashboardHbs2['default'])(data);
       }
 
-      window.clearTimeout(this.timer);
-      this.timer = window.setTimeout(function () {
-        _this.currentD = data.d;
-        css.display = 'block';
-      }, 100);
-
-      this.container.innerHTML = (0, _templatesDashboardHbs2['default'])(data);
       this.setPosition(obj);
     }
   }, {
     key: 'hide',
-    value: function hide() {
-      this.container.style.display = 'none';
+    value: function hide(data) {
+      if (!data || this.showingId === data.d) {
+        this.container.style.display = 'none';
+        this.showingId = null;
+        this.showing = null;
+      }
     }
   }, {
     key: 'setPosition',
     value: function setPosition(obj) {
+      var p = window.input.position;
       var ctn = this.container;
       var bounds = window.world.size;
       var size = new _point2js2['default'](ctn.clientWidth || 200, ctn.clientHeight || 150);
 
+      var gap = new _point2js2['default'](1.2, 1.1);
+
       var r = obj.radius;
-      var center = obj.position.add(new _point2js2['default'](r + 10, -r));
+      var center = p.clone();
 
       var sum = center.add(size);
+      sum.x *= gap.x;
+      sum.y *= gap.y;
+
       if (sum.x > bounds.x) {
-        center.x -= size.x;
+        center.x -= size.x * 2;
+      } else {
+        center.x += size.x;
       }
+
       if (sum.y > bounds.y) {
-        center.y -= size.y;
+        center.y -= size.y * gap.y;
       }
       if (center.y < 0) {
         center.y += size.y;
@@ -21982,7 +22004,8 @@ var _HLine2 = _interopRequireDefault(_HLine);
 
 var colors = {
   lines: '#666',
-  relLines: '#777'
+  relLines: '#777',
+  selected: 'orange'
 };
 
 var World = (function () {
@@ -22006,7 +22029,7 @@ var World = (function () {
     this.linesV = [];
     this.linesH = [];
     this.relationLines = [];
-    this.hideRelsLines = false;
+    this.hideRelsLines = true;
     this.nonRelsHidden = false;
     this.dashShowingRels = null;
 
@@ -22227,6 +22250,10 @@ var World = (function () {
       this.dashboards.forEach(function (dash) {
         dash.update(dt);
       });
+
+      if (this.dashShowingRels) {
+        this.dashShowingRels.fillColor = colors.selected;
+      }
     }
   }, {
     key: 'draw',
@@ -22234,8 +22261,7 @@ var World = (function () {
 
       var ctx = this.context;
 
-      //ctx.clearRect(0, 0, this.size.x, this.size.y);
-      this.canvas.width = this.canvas.width; // better clear
+      ctx.clearRect(0, 0, this.size.x, this.size.y);
 
       if (!this.hideRelsLines) {
         ctx.save();
@@ -22300,7 +22326,7 @@ var World = (function () {
         this.dashboards.set(dash.d, d);
       }
 
-      d.tweenTo({ x: to.x, y: to.y }, toR, 1, 'Quartic.Out');
+      d.setPos({ x: to.x, y: to.y }, toR);
 
       this.entityIndex++;
     }
@@ -22329,13 +22355,12 @@ var World = (function () {
         _this4.relationLines.push(l);
       });
 
-      this.hideRelsLines = false;
-      this.showAll();
       this.toggleRelDOM();
+      this.fallNonRels();
     }
   }, {
     key: 'toggleRelDOM',
-    value: function toggleRelDOM(show) {
+    value: function toggleRelDOM() {
       var container = document.querySelector('.relations');
       container.style.display = window.dselected ? 'block' : 'none';
 
@@ -22348,12 +22373,6 @@ var World = (function () {
       }
     }
   }, {
-    key: 'toggleRelOthersDOM',
-    value: function toggleRelOthersDOM(show) {
-      var toggleRel = document.getElementById('toggle-relations');
-      toggleRel.innerHTML = this.nonRelsHidden ? 'show others' : 'hide others';
-    }
-  }, {
     key: 'toggleLinesDOM',
     value: function toggleLinesDOM() {
       var toggleRelLines = document.getElementById('toggle-rel-lines');
@@ -22364,30 +22383,34 @@ var World = (function () {
     value: function fallNonRels() {
       var _this5 = this;
 
-      if (!this.dashShowingRels) return;
+      if (!this.dashShowingRels) {
+        this.showAll();
+        return;
+      }
 
       var i = 0;
       this.dashboards.forEach(function (dash) {
         if (_this5.dashShowingRels.dash.d !== dash.dash.d && _this5.dashShowingRels.dash.rels.indexOf(dash.dash.d) === -1) {
           dash.hide(i);
+        } else {
+          dash.show(i);
         }
+
         i++;
       });
 
       this.nonRelsHidden = true;
-      this.toggleRelOthersDOM();
     }
   }, {
     key: 'showAll',
     value: function showAll() {
       var i = 0;
       this.dashboards.forEach(function (dash) {
-        if (dash.hidden) dash.show(i);
+        dash.show(i);
         i++;
       });
 
       this.nonRelsHidden = false;
-      this.toggleRelOthersDOM();
       this.toggleLinesDOM();
     }
   }, {
@@ -22399,9 +22422,12 @@ var World = (function () {
   }, {
     key: 'clearRelations',
     value: function clearRelations() {
+      if (this.dashShowingRels) {
+        this.dashShowingRels.fillColor = this.gradient;
+      }
+
       this.dashShowingRels = null;
       this.relationLines = [];
-      this.hideRelsLines = false;
       this.showAll();
       this.toggleRelDOM();
     }
@@ -22438,7 +22464,7 @@ httpReq.onreadystatechange = function () {
   }
 };
 
-httpReq.open('GET', 'https://raw.githubusercontent.com/pjnovas/hackdash-visualization/gh-pages/js/dashboards.json', true);
+httpReq.open('GET', window.dashboards_uri, true);
 httpReq.send();
 
 function init(data) {
@@ -22463,11 +22489,6 @@ function init(data) {
   height.addEventListener('change', function (e) {
     var val = height.options[height.selectedIndex].value;
     window.machine.changeMetric('height', val);
-  });
-
-  var toggleRel = document.getElementById('toggle-relations');
-  toggleRel.addEventListener('click', function (e) {
-    window.machine.toggleNonRel();
   });
 
   var toggleRelLines = document.getElementById('toggle-rel-lines');
