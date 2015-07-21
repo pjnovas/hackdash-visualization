@@ -20,7 +20,7 @@ export default class Circle {
     this.alpha = options.alpha || 1;
   }
 
-  tweenTo(pos, radius, duration, easing, delay) {
+  tweenTo(pos, radius, duration, easing, delay, done) {
     this.clearTween('tweenPos');
     this.clearTween('tweenRadius');
 
@@ -36,7 +36,11 @@ export default class Circle {
       this.tweenPos.delay(delay*1000);
     }
 
-    this.tweenPos.onComplete(() => { this.clearTween('tweenPos'); });
+    this.tweenPos.onComplete(() => {
+      this.clearTween('tweenPos');
+      done && done();
+    });
+
     this.tweenPos.start(0);
 
     if (this.radius !== radius){
@@ -63,11 +67,6 @@ export default class Circle {
       this.lineSize = 5;
       this.hover = true;
       this.onOver();
-
-      if (mouse.isDown){
-        this.onClick();
-        mouse.isDown = false; // hack > fire click on only first match
-      }
 
     }
     else if (this.hover){

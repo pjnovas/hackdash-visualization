@@ -1,5 +1,6 @@
 
 import Circle from './Circle';
+import Point from 'point2js';
 
 export default class Dashboard extends Circle {
 
@@ -22,17 +23,28 @@ export default class Dashboard extends Circle {
     window.popover.hide(this.dash);
   }
 
-  hide(idx) {
-    var delay = (idx >= 0) ? idx * 0.001 : null;
+  setPos(to, toR) {
+    this.showPos = new Point(to).clone();
+    if (!this.hidden){
+      this.tweenTo({ x: to.x, y: to.y }, toR, 1, 'Quartic.Out');
+    }
+  }
 
-    this.prevPos = this.position.clone();
-    this.tweenTo({ y: world.size.y + this.radius }, null, 1, 'Back.In', delay);
-    this.hidden = true;
+  hide(idx) {
+    if (!this.hidden){
+      var delay = (idx >= 0) ? idx * 0.001 : null;
+
+      this.tweenTo({ y: world.size.y + this.radius }, null, 1, 'Back.In', delay);
+      this.hidden = true;
+    }
   }
 
   show(idx) {
-    var delay = (idx >= 0) ? idx * 0.001 : null;
-    this.tweenTo({ y: this.prevPos.y }, null, 1, 'Back.Out', delay);
+    if (this.hidden){
+      var delay = (idx >= 0) ? idx * 0.001 : null;
+      this.tweenTo({ y: this.showPos.y }, null, 1, 'Back.Out', delay);
+      this.hidden = false;
+    }
   }
 
 };

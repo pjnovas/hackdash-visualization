@@ -12,7 +12,7 @@ httpReq.onreadystatechange = () => {
   }
 };
 
-httpReq.open("GET", "/js/dashboards.json", true);
+httpReq.open("GET", window.dashboards_uri, true);
 httpReq.send();
 
 function init(data){
@@ -37,11 +37,6 @@ function init(data){
   height.addEventListener('change', e => {
     var val = height.options[height.selectedIndex].value;
     window.machine.changeMetric('height', val);
-  });
-
-  var toggleRel = document.getElementById('toggle-relations');
-  toggleRel.addEventListener('click', e => {
-    window.machine.toggleNonRel();
   });
 
   var toggleRelLines = document.getElementById('toggle-rel-lines');

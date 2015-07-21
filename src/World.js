@@ -10,7 +10,8 @@ import HLine from './HLine';
 
 var colors = {
   lines: '#666',
-  relLines: '#777'
+  relLines: '#777',
+  selected: 'orange'
 };
 
 export default class World {
@@ -34,7 +35,7 @@ export default class World {
     this.linesV = [];
     this.linesH = [];
     this.relationLines = [];
-    this.hideRelsLines = false;
+    this.hideRelsLines = true;
     this.nonRelsHidden = false;
     this.dashShowingRels = null;
 
@@ -248,14 +249,17 @@ export default class World {
       dash.update(dt);
     });
 
+    if (this.dashShowingRels){
+      this.dashShowingRels.fillColor = colors.selected;
+    }
+
   }
 
   draw() {
 
     var ctx = this.context;
 
-    //ctx.clearRect(0, 0, this.size.x, this.size.y);
-    this.canvas.width = this.canvas.width; // better clear
+    ctx.clearRect(0, 0, this.size.x, this.size.y);
 
     if (!this.hideRelsLines){
       ctx.save();
@@ -319,7 +323,7 @@ export default class World {
       this.dashboards.set(dash.d, d);
     }
 
-    d.tweenTo({ x: to.x, y: to.y }, toR, 1, 'Quartic.Out');
+    d.setPos({ x: to.x, y: to.y }, toR);
 
     this.entityIndex++;
   }
@@ -347,12 +351,11 @@ export default class World {
       this.relationLines.push(l);
     });
 
-    this.hideRelsLines = false;
-    this.showAll();
     this.toggleRelDOM();
+    this.fallNonRels();
   }
 
-  toggleRelDOM(show) {
+  toggleRelDOM() {
     var container = document.querySelector('.relations');
     container.style.display = window.dselected ? 'block' : 'none';
 
@@ -365,11 +368,6 @@ export default class World {
     }
   }
 
-  toggleRelOthersDOM(show){
-    var toggleRel = document.getElementById('toggle-relations');
-    toggleRel.innerHTML = this.nonRelsHidden ? 'show others':'hide others';
-  }
-
   toggleLinesDOM() {
     var toggleRelLines = document.getElementById('toggle-rel-lines');
     toggleRelLines.innerHTML = this.hideRelsLines ? 'show lines':'hide lines';
@@ -377,7 +375,10 @@ export default class World {
 
   fallNonRels(){
 
-    if (!this.dashShowingRels) return;
+    if (!this.dashShowingRels) {
+      this.showAll();
+      return;
+    }
 
     var i = 0;
     this.dashboards.forEach( (dash) => {
@@ -385,22 +386,24 @@ export default class World {
         this.dashShowingRels.dash.rels.indexOf(dash.dash.d) === -1){
         dash.hide(i);
       }
+      else {
+        dash.show(i);
+      }
+
       i++;
     });
 
     this.nonRelsHidden = true;
-    this.toggleRelOthersDOM();
   }
 
   showAll(){
     var i = 0;
     this.dashboards.forEach( dash => {
-      if (dash.hidden) dash.show(i);
+      dash.show(i);
       i++;
     });
 
     this.nonRelsHidden = false;
-    this.toggleRelOthersDOM();
     this.toggleLinesDOM();
   }
 
@@ -410,9 +413,12 @@ export default class World {
   }
 
   clearRelations(){
+    if (this.dashShowingRels){
+      this.dashShowingRels.fillColor = this.gradient;
+    }
+
     this.dashShowingRels = null;
     this.relationLines = [];
-    this.hideRelsLines = false;
     this.showAll();
     this.toggleRelDOM();
   }

@@ -65,6 +65,10 @@ export default class Input {
       this._clicked = false;
       window.world.clearRelations();
     }
+    else if (this.isDown){
+      window.popover.select();
+      this.isDown = false;
+    }
   }
 
   getEventPosition(e){

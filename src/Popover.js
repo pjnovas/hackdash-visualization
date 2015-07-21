@@ -8,11 +8,19 @@ export default class Popover {
     this.container = options.container;
     this.container.style.display = 'none';
 
+    this.showing = null;
     this.showingId = null;
+  }
+
+  select(){
+    if (this.showing){
+      this.showing.onClick();
+    }
   }
 
   show(obj, data){
     if (this.showingId !== data.d){
+      this.showing = obj;
       this.showingId = data.d;
       var css = this.container.style;
 
@@ -33,6 +41,7 @@ export default class Popover {
     if (!data || this.showingId === data.d){
       this.container.style.display = 'none';
       this.showingId = null;
+      this.showing = null;
     }
   }
 

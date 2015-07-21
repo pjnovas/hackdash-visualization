@@ -41,22 +41,6 @@ export default function(options){
     return world.changeMetric(type, value);
   };
 
-  // Relations toggle
-  function isHidingNonRels(){
-    return world.nonRelsHidden;
-  }
-
-  game.toggleNonRel = function(){
-    if (isHidingNonRels()){
-      world.showAll();
-    }
-    else {
-      world.fallNonRels();
-    }
-  };
-
-  game.isShowingRels = isHidingNonRels;
-
   game.toggleRelLines = function(){
     world.toggleRelLines();
   };
