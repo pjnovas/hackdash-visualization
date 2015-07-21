@@ -21306,11 +21306,9 @@ var Circle = (function () {
 
       if (this.isPointInside(mouse.position)) {
 
-        if (!this.hover) {
-          this.lineSize = 5;
-          this.hover = true;
-          this.onOver();
-        }
+        this.lineSize = 5;
+        this.hover = true;
+        this.onOver();
 
         if (mouse.isDown) {
           this.onClick();
@@ -21439,7 +21437,7 @@ var Dashboard = (function (_Circle) {
   }, {
     key: 'onOut',
     value: function onOut() {
-      window.popover.hide();
+      window.popover.hide(this.dash);
     }
   }, {
     key: 'hide',
@@ -21815,49 +21813,62 @@ var Popover = (function () {
 
     this.container = options.container;
     this.container.style.display = 'none';
+
+    this.showingId = null;
   }
 
   _createClass(Popover, [{
     key: 'show',
     value: function show(obj, data) {
-      var _this = this;
+      if (this.showingId !== data.d) {
+        this.showingId = data.d;
+        var css = this.container.style;
 
-      var css = this.container.style;
+        if (data.d === this.currentD && css.display === 'block') {
+          return;
+        }
 
-      if (data.d === this.currentD && css.display === 'block') {
-        return;
+        this.currentD = data.d;
+        css.display = 'block';
+
+        this.container.innerHTML = (0, _templatesDashboardHbs2['default'])(data);
       }
 
-      window.clearTimeout(this.timer);
-      this.timer = window.setTimeout(function () {
-        _this.currentD = data.d;
-        css.display = 'block';
-      }, 100);
-
-      this.container.innerHTML = (0, _templatesDashboardHbs2['default'])(data);
       this.setPosition(obj);
     }
   }, {
     key: 'hide',
-    value: function hide() {
-      this.container.style.display = 'none';
+    value: function hide(data) {
+      if (!data || this.showingId === data.d) {
+        this.container.style.display = 'none';
+        this.showingId = null;
+      }
     }
   }, {
     key: 'setPosition',
     value: function setPosition(obj) {
+      var p = window.input.position;
       var ctn = this.container;
       var bounds = window.world.size;
       var size = new _point2js2['default'](ctn.clientWidth || 200, ctn.clientHeight || 150);
 
+      var gap = new _point2js2['default'](1.2, 1.1);
+
       var r = obj.radius;
-      var center = obj.position.add(new _point2js2['default'](r + 10, -r));
+      var center = p.clone();
 
       var sum = center.add(size);
+      sum.x *= gap.x;
+      sum.y *= gap.y;
+
       if (sum.x > bounds.x) {
-        center.x -= size.x;
+        center.x -= size.x * 2;
+      } else {
+        center.x += size.x;
       }
+
       if (sum.y > bounds.y) {
-        center.y -= size.y;
+        center.y -= size.y * gap.y;
       }
       if (center.y < 0) {
         center.y += size.y;

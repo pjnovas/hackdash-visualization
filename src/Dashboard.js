@@ -19,7 +19,7 @@ export default class Dashboard extends Circle {
   }
 
   onOut(){
-    window.popover.hide();
+    window.popover.hide(this.dash);
   }
 
   hide(idx) {

@@ -7,43 +7,59 @@ export default class Popover {
   constructor(options) {
     this.container = options.container;
     this.container.style.display = 'none';
+
+    this.showingId = null;
   }
 
   show(obj, data){
-    var css = this.container.style;
+    if (this.showingId !== data.d){
+      this.showingId = data.d;
+      var css = this.container.style;
 
-    if (data.d === this.currentD && css.display === 'block'){
-      return;
-    }
+      if (data.d === this.currentD && css.display === 'block'){
+        return;
+      }
 
-    window.clearTimeout(this.timer);
-    this.timer = window.setTimeout(() => {
       this.currentD = data.d;
       css.display = 'block';
-    }, 100);
 
-    this.container.innerHTML = popoverTmpl(data);
+      this.container.innerHTML = popoverTmpl(data);
+    }
+
     this.setPosition(obj);
   }
 
-  hide(){
-    this.container.style.display = 'none';
+  hide(data){
+    if (!data || this.showingId === data.d){
+      this.container.style.display = 'none';
+      this.showingId = null;
+    }
   }
 
   setPosition(obj) {
+    var p = window.input.position;
     var ctn = this.container;
     var bounds = window.world.size;
     var size = new Point(ctn.clientWidth || 200, ctn.clientHeight || 150);
 
+    var gap = new Point(1.2, 1.1);
+
     var r = obj.radius;
-    var center = obj.position.add(new Point(r+10, -r));
+    var center = p.clone();
 
     var sum = center.add(size);
+    sum.x *= gap.x;
+    sum.y *= gap.y;
+
     if (sum.x > bounds.x){
-      center.x -= size.x;
+      center.x -= size.x*2;
     }
+    else {
+      center.x += size.x;
+    }
+
     if (sum.y > bounds.y){
-      center.y -= size.y;
+      center.y -= size.y*gap.y;
     }
     if (center.y < 0){
       center.y += size.y;

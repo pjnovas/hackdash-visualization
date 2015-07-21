@@ -60,11 +60,9 @@ export default class Circle {
 
     if (this.isPointInside(mouse.position)){
 
-      if (!this.hover){
-        this.lineSize = 5;
-        this.hover = true;
-        this.onOver();
-      }
+      this.lineSize = 5;
+      this.hover = true;
+      this.onOver();
 
       if (mouse.isDown){
         this.onClick();
