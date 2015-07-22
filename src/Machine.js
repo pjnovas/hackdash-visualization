@@ -8,6 +8,7 @@ export default function(options){
   var game = new Gameloop();
   var world = new World(options.container, options.data);
   var input = new Input(options.container);
+  input.enabled = false;
 
   game.on('update', dt => {
     world.update(dt);
@@ -41,8 +42,13 @@ export default function(options){
     return world.changeMetric(type, value);
   };
 
-  game.toggleRelLines = function(){
-    world.toggleRelLines();
+  game.clearRel = function(){
+    input.clear();
+    world.clearRelations();
+  };
+
+  game.toggleNonRelated = function(){
+    world.toggleNonRelated();
   };
 
   return game;

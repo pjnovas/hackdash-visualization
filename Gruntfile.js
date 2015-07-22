@@ -37,6 +37,7 @@ module.exports = function (grunt) {
               'js/<%= pkg.name %>.js',
               'css/<%= pkg.name %>.css',
               'js/dashboards.json',
+              'logo.png',
               'index.html'
             ],
             dest: 'dist/',

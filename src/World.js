@@ -11,7 +11,8 @@ import HLine from './HLine';
 var colors = {
   lines: '#666',
   relLines: '#777',
-  selected: 'orange'
+  selected: 'orange',
+  related: '#E45757' //'#50CE64' //'#76D9A7'
 };
 
 export default class World {
@@ -35,14 +36,20 @@ export default class World {
     this.linesV = [];
     this.linesH = [];
     this.relationLines = [];
-    this.hideRelsLines = true;
+    //this.hideRelsLines = true;
     this.nonRelsHidden = false;
     this.dashShowingRels = null;
+
+    window.hideNonRelated = false;
 
     this.vars = {
       radius: 'us',
       height: 'pc'
     };
+  }
+
+  isLoaded(){
+    return this.dashboards.size === this.data.length;
   }
 
   changeMetric(type, value) {
@@ -247,6 +254,13 @@ export default class World {
 
     this.dashboards.forEach( dash => {
       dash.update(dt);
+
+      if (this.dashShowingRels && !dash.hidden){
+        dash.fillColor = colors.related;
+      }
+      else {
+        dash.fillColor = this.gradient;
+      }
     });
 
     if (this.dashShowingRels){
@@ -260,7 +274,7 @@ export default class World {
     var ctx = this.context;
 
     ctx.clearRect(0, 0, this.size.x, this.size.y);
-
+/*
     if (!this.hideRelsLines){
       ctx.save();
       this.relationLines.forEach( line => {
@@ -268,7 +282,7 @@ export default class World {
       });
       ctx.restore();
     }
-
+*/
     ctx.save();
     this.dashboards.forEach( dash => {
       dash.draw(ctx);
@@ -281,6 +295,9 @@ export default class World {
     var idx = this.entityIndex;
 
     if (!this.data[idx]){
+      var info = document.querySelector('.info');
+      info.innerText = 'click on a circle to show related';
+      window.input.enabled = true;
       //window.machine.end();
       return;
     }
@@ -333,7 +350,7 @@ export default class World {
     this.dashShowingRels = dashboard;
     this.relationLines = [];
     var p1 = dashboard.position;
-
+/*
     dashboard.dash.rels.forEach( domain => {
 
       var dash = this.dashboards.get(domain);
@@ -350,14 +367,23 @@ export default class World {
 
       this.relationLines.push(l);
     });
-
+*/
     this.toggleRelDOM();
+    this.fallNonRels();
+  }
+
+  toggleNonRelated() {
+    window.hideNonRelated = !window.hideNonRelated;
     this.fallNonRels();
   }
 
   toggleRelDOM() {
     var container = document.querySelector('.relations');
-    container.style.display = window.dselected ? 'block' : 'none';
+    var info = document.querySelector('.info');
+    var helpInfo = document.getElementById('help-info');
+    container.style.display = window.dselected ? 'inline-table' : 'none';
+    info.style.display = window.dselected ? 'none' : 'inline-block';
+    helpInfo.style.display = !window.dselected ? 'none' : helpInfo.style.display;
 
     if (window.dselected){
       var cap = document.querySelector('.relations-label');
@@ -367,12 +393,12 @@ export default class World {
       cap.title = s.dash.rels.length + ' Relations. Click to open dashboard';
     }
   }
-
+/*
   toggleLinesDOM() {
     var toggleRelLines = document.getElementById('toggle-rel-lines');
     toggleRelLines.innerHTML = this.hideRelsLines ? 'show lines':'hide lines';
   }
-
+*/
   fallNonRels(){
 
     if (!this.dashShowingRels) {
@@ -404,21 +430,21 @@ export default class World {
     });
 
     this.nonRelsHidden = false;
-    this.toggleLinesDOM();
+    //this.toggleLinesDOM();
   }
-
+/*
   toggleRelLines() {
     this.hideRelsLines = !this.hideRelsLines;
     this.toggleLinesDOM();
   }
-
+*/
   clearRelations(){
     if (this.dashShowingRels){
       this.dashShowingRels.fillColor = this.gradient;
     }
 
     this.dashShowingRels = null;
-    this.relationLines = [];
+    //this.relationLines = [];
     this.showAll();
     this.toggleRelDOM();
   }

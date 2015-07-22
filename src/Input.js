@@ -60,15 +60,19 @@ export default class Input {
 
   update(dt){
     if (this._clicked && this.isDown){
-      window.popover.hide();
-      window.dselected = false;
-      this._clicked = false;
+      this.clear();
       window.world.clearRelations();
     }
     else if (this.isDown){
       window.popover.select();
       this.isDown = false;
     }
+  }
+
+  clear() {
+    window.popover.hide();
+    window.dselected = false;
+    input._clicked = false;
   }
 
   getEventPosition(e){

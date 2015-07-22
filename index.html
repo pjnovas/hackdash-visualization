@@ -14,29 +14,48 @@
     <div id="container"></div>
     <div id="popover"></div>
 
-    <div class="metrics height">
+    <div class="top-bar">
+      <div class="metrics height">
 
-      <select id="height">
-        <option value="pc" selected="true">Projects</option>
-        <option value="us">People</option>
-        <option value="rc">Relations</option>
-      </select>
+        <select id="height">
+          <option value="pc" selected="true">Projects</option>
+          <option value="us">People</option>
+          <option value="rc">Relations</option>
+        </select>
 
+      </div>
+
+      <div class="metrics center">
+        <div class="relations" style="display: none;">
+          <a class="relations-label" target="_blank"></a>
+          <a id="clear-relations" class="btn">x</a>
+          <a id="hide-others" class="btn">&#8595;</a>
+          <a id="help" class="btn">?</a>
+        </div>
+        <span class="info">loading</span>
+      </div>
+
+      <div class="metrics radius">
+
+        <label>size</label>
+        <select id="radius">
+          <option value="us" selected="true">People</option>
+          <option value="pc">Projects</option>
+          <option value="rc">Relations</option>
+        </select>
+
+      </div>
     </div>
 
-    <div class="metrics radius">
+    <div id="help-info" style="display: none;">
+      <p>Show related dashboards by common participants.
+      People who is in the selected hackathon also participated in related ones.</p>
+    </div>
 
-      <label>radius</label>
-      <select id="radius">
-        <option value="us" selected="true">People</option>
-        <option value="pc">Projects</option>
-        <option value="rc">Relations</option>
-      </select>
-
-      <div class="relations" style="display: none;">
-        <a class="relations-label" target="_blank"></a><a id="help">?</a>
-        <a id="toggle-rel-lines"></a>
-      </div>
+    <div class="logo">
+      <a href="https://hackdash.org" target="_blank">
+        <img src="logo.png">
+      </a>
     </div>
 
     <script>

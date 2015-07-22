@@ -39,14 +39,21 @@ function init(data){
     window.machine.changeMetric('height', val);
   });
 
-  var toggleRelLines = document.getElementById('toggle-rel-lines');
-  toggleRelLines.addEventListener('click', e => {
-    window.machine.toggleRelLines();
+  var hideOthres = document.getElementById('hide-others');
+  hideOthres.addEventListener('click', e => {
+    window.machine.toggleNonRelated();
+    hideOthres.innerHTML = window.hideNonRelated ? '&#8593' : '&#8595';
+  });
+
+  var clearRel = document.getElementById('clear-relations');
+  clearRel.addEventListener('click', e => {
+    window.machine.clearRel();
   });
 
   var help = document.getElementById('help');
+  var helpInfo = document.getElementById('help-info');
   help.addEventListener('click', e => {
-    window.alert('Shows people inside one dashboard on which other dashboards are also in.');
+    helpInfo.style.display = (helpInfo.style.display === 'none' ? 'block' : 'none');
   });
 
   window.machine.start();
