@@ -21444,6 +21444,7 @@ var Dashboard = (function (_Circle) {
     key: 'setPos',
     value: function setPos(to, toR) {
       this.showPos = new _point2js2['default'](to).clone();
+
       if (!this.hidden) {
         this.tweenTo({ x: to.x, y: to.y }, toR, 1, 'Quartic.Out');
       }
@@ -21451,21 +21452,27 @@ var Dashboard = (function (_Circle) {
   }, {
     key: 'hide',
     value: function hide(idx) {
-      if (!this.hidden) {
-        var delay = idx >= 0 ? idx * 0.001 : null;
+      //if (!this.hidden){
+      var delay = idx >= 0 ? idx * 0.001 : null;
 
+      if (window.hideNonRelated) {
         this.tweenTo({ y: world.size.y + this.radius }, null, 1, 'Back.In', delay);
-        this.hidden = true;
+      } else {
+        this.tweenTo({ y: this.showPos.y }, null, 1, 'Back.Out', delay);
       }
+
+      this.hidden = true;
+      //}
     }
   }, {
     key: 'show',
     value: function show(idx) {
-      if (this.hidden) {
-        var delay = idx >= 0 ? idx * 0.001 : null;
-        this.tweenTo({ y: this.showPos.y }, null, 1, 'Back.Out', delay);
-        this.hidden = false;
-      }
+      //if (this.hidden){
+      var delay = idx >= 0 ? idx * 0.001 : null;
+
+      this.tweenTo({ y: this.showPos.y }, null, 1, 'Back.Out', delay);
+      this.hidden = false;
+      //}
     }
   }]);
 
@@ -21626,14 +21633,19 @@ var Input = (function () {
     key: 'update',
     value: function update(dt) {
       if (this._clicked && this.isDown) {
-        window.popover.hide();
-        window.dselected = false;
-        this._clicked = false;
+        this.clear();
         window.world.clearRelations();
       } else if (this.isDown) {
         window.popover.select();
         this.isDown = false;
       }
+    }
+  }, {
+    key: 'clear',
+    value: function clear() {
+      window.popover.hide();
+      window.dselected = false;
+      input._clicked = false;
     }
   }, {
     key: 'getEventPosition',
@@ -21749,6 +21761,7 @@ exports['default'] = function (options) {
   var game = new _gameloop2['default']();
   var world = new _World2['default'](options.container, options.data);
   var input = new _Input2['default'](options.container);
+  input.enabled = false;
 
   game.on('update', function (dt) {
     world.update(dt);
@@ -21778,8 +21791,13 @@ exports['default'] = function (options) {
     return world.changeMetric(type, value);
   };
 
-  game.toggleRelLines = function () {
-    world.toggleRelLines();
+  game.clearRel = function () {
+    input.clear();
+    world.clearRelations();
+  };
+
+  game.toggleNonRelated = function () {
+    world.toggleNonRelated();
   };
 
   return game;
@@ -22005,7 +22023,8 @@ var _HLine2 = _interopRequireDefault(_HLine);
 var colors = {
   lines: '#666',
   relLines: '#777',
-  selected: 'orange'
+  selected: 'orange',
+  related: '#E45757' //'#50CE64' //'#76D9A7'
 };
 
 var World = (function () {
@@ -22029,9 +22048,11 @@ var World = (function () {
     this.linesV = [];
     this.linesH = [];
     this.relationLines = [];
-    this.hideRelsLines = true;
+    //this.hideRelsLines = true;
     this.nonRelsHidden = false;
     this.dashShowingRels = null;
+
+    window.hideNonRelated = false;
 
     this.vars = {
       radius: 'us',
@@ -22040,6 +22061,11 @@ var World = (function () {
   }
 
   _createClass(World, [{
+    key: 'isLoaded',
+    value: function isLoaded() {
+      return this.dashboards.size === this.data.length;
+    }
+  }, {
     key: 'changeMetric',
     value: function changeMetric(type, value) {
       this.vars[type] = value;
@@ -22244,11 +22270,18 @@ var World = (function () {
   }, {
     key: 'update',
     value: function update(dt) {
+      var _this4 = this;
 
       this.nextEntity();
 
       this.dashboards.forEach(function (dash) {
         dash.update(dt);
+
+        if (_this4.dashShowingRels && !dash.hidden) {
+          dash.fillColor = colors.related;
+        } else {
+          dash.fillColor = _this4.gradient;
+        }
       });
 
       if (this.dashShowingRels) {
@@ -22262,15 +22295,15 @@ var World = (function () {
       var ctx = this.context;
 
       ctx.clearRect(0, 0, this.size.x, this.size.y);
-
-      if (!this.hideRelsLines) {
-        ctx.save();
-        this.relationLines.forEach(function (line) {
-          if (line) line.draw(ctx);
-        });
-        ctx.restore();
-      }
-
+      /*
+          if (!this.hideRelsLines){
+            ctx.save();
+            this.relationLines.forEach( line => {
+              if (line) line.draw(ctx);
+            });
+            ctx.restore();
+          }
+      */
       ctx.save();
       this.dashboards.forEach(function (dash) {
         dash.draw(ctx);
@@ -22283,6 +22316,9 @@ var World = (function () {
       var idx = this.entityIndex;
 
       if (!this.data[idx]) {
+        var info = document.querySelector('.info');
+        info.innerText = 'click on a circle to show related';
+        window.input.enabled = true;
         //window.machine.end();
         return;
       }
@@ -22333,36 +22369,46 @@ var World = (function () {
   }, {
     key: 'showRelations',
     value: function showRelations(dashboard) {
-      var _this4 = this;
 
       this.dashShowingRels = dashboard;
       this.relationLines = [];
       var p1 = dashboard.position;
-
-      dashboard.dash.rels.forEach(function (domain) {
-
-        var dash = _this4.dashboards.get(domain);
-
-        if (dash) {
-
-          var l = new _Line2['default'](p1, dash.position, {
-            lineColor: colors.relLines,
-            lineSize: 1,
-            alpha: 0.7
+      /*
+          dashboard.dash.rels.forEach( domain => {
+      
+            var dash = this.dashboards.get(domain);
+      
+            if (dash){
+      
+              var l = new Line(p1, dash.position, {
+                lineColor: colors.relLines,
+                lineSize: 1,
+                alpha: 0.7
+              });
+      
+            }
+      
+            this.relationLines.push(l);
           });
-        }
-
-        _this4.relationLines.push(l);
-      });
-
+      */
       this.toggleRelDOM();
+      this.fallNonRels();
+    }
+  }, {
+    key: 'toggleNonRelated',
+    value: function toggleNonRelated() {
+      window.hideNonRelated = !window.hideNonRelated;
       this.fallNonRels();
     }
   }, {
     key: 'toggleRelDOM',
     value: function toggleRelDOM() {
       var container = document.querySelector('.relations');
-      container.style.display = window.dselected ? 'block' : 'none';
+      var info = document.querySelector('.info');
+      var helpInfo = document.getElementById('help-info');
+      container.style.display = window.dselected ? 'inline-table' : 'none';
+      info.style.display = window.dselected ? 'none' : 'inline-block';
+      helpInfo.style.display = !window.dselected ? 'none' : helpInfo.style.display;
 
       if (window.dselected) {
         var cap = document.querySelector('.relations-label');
@@ -22373,13 +22419,14 @@ var World = (function () {
       }
     }
   }, {
-    key: 'toggleLinesDOM',
-    value: function toggleLinesDOM() {
-      var toggleRelLines = document.getElementById('toggle-rel-lines');
-      toggleRelLines.innerHTML = this.hideRelsLines ? 'show lines' : 'hide lines';
-    }
-  }, {
     key: 'fallNonRels',
+
+    /*
+      toggleLinesDOM() {
+        var toggleRelLines = document.getElementById('toggle-rel-lines');
+        toggleRelLines.innerHTML = this.hideRelsLines ? 'show lines':'hide lines';
+      }
+    */
     value: function fallNonRels() {
       var _this5 = this;
 
@@ -22411,23 +22458,24 @@ var World = (function () {
       });
 
       this.nonRelsHidden = false;
-      this.toggleLinesDOM();
-    }
-  }, {
-    key: 'toggleRelLines',
-    value: function toggleRelLines() {
-      this.hideRelsLines = !this.hideRelsLines;
-      this.toggleLinesDOM();
+      //this.toggleLinesDOM();
     }
   }, {
     key: 'clearRelations',
+
+    /*
+      toggleRelLines() {
+        this.hideRelsLines = !this.hideRelsLines;
+        this.toggleLinesDOM();
+      }
+    */
     value: function clearRelations() {
       if (this.dashShowingRels) {
         this.dashShowingRels.fillColor = this.gradient;
       }
 
       this.dashShowingRels = null;
-      this.relationLines = [];
+      //this.relationLines = [];
       this.showAll();
       this.toggleRelDOM();
     }
@@ -22491,14 +22539,21 @@ function init(data) {
     window.machine.changeMetric('height', val);
   });
 
-  var toggleRelLines = document.getElementById('toggle-rel-lines');
-  toggleRelLines.addEventListener('click', function (e) {
-    window.machine.toggleRelLines();
+  var hideOthres = document.getElementById('hide-others');
+  hideOthres.addEventListener('click', function (e) {
+    window.machine.toggleNonRelated();
+    hideOthres.innerHTML = window.hideNonRelated ? '&#8593' : '&#8595';
+  });
+
+  var clearRel = document.getElementById('clear-relations');
+  clearRel.addEventListener('click', function (e) {
+    window.machine.clearRel();
   });
 
   var help = document.getElementById('help');
+  var helpInfo = document.getElementById('help-info');
   help.addEventListener('click', function (e) {
-    window.alert('Shows people inside one dashboard on which other dashboards are also in.');
+    helpInfo.style.display = helpInfo.style.display === 'none' ? 'block' : 'none';
   });
 
   window.machine.start();
