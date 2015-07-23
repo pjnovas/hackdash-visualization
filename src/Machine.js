@@ -51,5 +51,9 @@ export default function(options){
     world.toggleNonRelated();
   };
 
+  game.showRelationsFor = function(domain){
+    world.showRelationsFor(domain);
+  };
+
   return game;
 }

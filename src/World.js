@@ -295,7 +295,8 @@ export default class World {
     var idx = this.entityIndex;
 
     if (!this.data[idx]){
-      $('.info').text('click on a circle to show related');
+      $('.info').text('click on a circle or');
+      if (!window.dselected) $('.search').show();
       window.input.enabled = true;
       return;
     }
@@ -343,6 +344,14 @@ export default class World {
     this.entityIndex++;
   }
 
+  showRelationsFor(domain){
+    window.dselected = true;
+    var dash = this.dashboards.get(domain);
+    if (dash){
+      this.showRelations(dash);
+    }
+  }
+
   showRelations(dashboard) {
 
     this.dashShowingRels = dashboard;
@@ -378,10 +387,12 @@ export default class World {
   toggleRelDOM() {
 
     $('.relations').css({ display: window.dselected ? 'inline-table' : 'none' });
-    $('.info').css({ display: window.dselected ? 'none' : 'inline-block' });
 
     if (window.dselected){
       var s = this.dashShowingRels;
+
+      $('.info').hide();
+      $('.search').hide();
 
       $('.relations-label')
         .text(s.dash.d + ' [' + s.dash.rels.length + ']')
@@ -391,6 +402,8 @@ export default class World {
         });
     }
     else {
+      $('.info').show();
+      $('.search').show();
       $('#help-info').hide();
     }
   }

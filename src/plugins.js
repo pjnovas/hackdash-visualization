@@ -7,6 +7,8 @@ import moment from 'moment';
 window.jQuery = jQuery;
 window.$ = jQuery;
 
+import 'devbridge-autocomplete';
+
 Handlebars.registerHelper('parseDate', unixTime => {
   return moment.unix(unixTime).format('DD/MM/YYYY');
 });

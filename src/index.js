@@ -4,6 +4,7 @@ import Machine from './Machine';
 import Popover from './Popover';
 
 $(function(){
+  $('.search').hide();
   $.ajax(window.dashboards_uri).done(init);
 });
 
@@ -37,6 +38,49 @@ function init(data){
     $('#help-info').toggle();
   });
 
+  var dashes = data.filter( dash => {
+    return dash.rels.length;
+  });
+
+  dashes = dashes.map( dash => {
+    return { value: dash.d + ' [' + dash.rels.length + ']', data: dash };
+  });
+
+  $('#search').autocomplete({
+    lookupLimit: 5,
+    lookup: dashes,
+    onSelect: function (suggestion) {
+      if (suggestion && suggestion.value){
+        window.machine.showRelationsFor(suggestion.data.d);
+        $('#search').val('');
+      }
+    }
+  });
+
+/*
+  // Removed API call since there are dashboards wich are not on the visualization.
+
+  $('#search').autocomplete({
+    serviceUrl: 'https://hackdash.org/api/v2/dashboards',
+    deferRequestBy: 300,
+    paramName: 'q',
+    params: { limit: 5 },
+    transformResult: function(response) {
+      var list = JSON.parse(response);
+
+      return {
+        suggestions: $.map(list, function(dashboard) {
+          return { value: dashboard.domain, data: dashboard.domain };
+        })
+      };
+    },
+    onSelect: function (suggestion) {
+      if (suggestion && suggestion.value){
+        window.machine.showRelationsFor(suggestion.value);
+      }
+    }
+  });
+*/
   window.machine.start();
 }
 

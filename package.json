@@ -25,6 +25,7 @@
     "grunt": "^0.4.5",
     "grunt-browserify": "^3.8.0",
     "grunt-contrib-copy": "^0.8.0",
+    "grunt-contrib-uglify": "^0.9.1",
     "hbsfy": "^2.2.1",
     "install": "^0.1.8",
     "jsonfile": "^2.2.1",

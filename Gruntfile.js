@@ -27,6 +27,14 @@ module.exports = function (grunt) {
       }
     },
 
+    uglify: {
+      dist: {
+        files: {
+          'js/<%= pkg.name %>.js': ['js/<%= pkg.name %>.js']
+        }
+      }
+    },
+
     copy: {
       dist: {
         files: [
@@ -52,9 +60,10 @@ module.exports = function (grunt) {
   });
 
   grunt.loadNpmTasks("grunt-browserify");
+  grunt.loadNpmTasks("grunt-contrib-uglify");
   grunt.loadNpmTasks("grunt-contrib-copy");
 
   grunt.registerTask("default", "browserify");
-  grunt.registerTask("dist", "copy:dist");
+  grunt.registerTask("dist", ["uglify:dist", "copy:dist"]);
 
 };
