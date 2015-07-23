@@ -295,10 +295,8 @@ export default class World {
     var idx = this.entityIndex;
 
     if (!this.data[idx]){
-      var info = document.querySelector('.info');
-      info.innerText = 'click on a circle to show related';
+      $('.info').text('click on a circle to show related');
       window.input.enabled = true;
-      //window.machine.end();
       return;
     }
 
@@ -378,19 +376,22 @@ export default class World {
   }
 
   toggleRelDOM() {
-    var container = document.querySelector('.relations');
-    var info = document.querySelector('.info');
-    var helpInfo = document.getElementById('help-info');
-    container.style.display = window.dselected ? 'inline-table' : 'none';
-    info.style.display = window.dselected ? 'none' : 'inline-block';
-    helpInfo.style.display = !window.dselected ? 'none' : helpInfo.style.display;
+
+    $('.relations').css({ display: window.dselected ? 'inline-table' : 'none' });
+    $('.info').css({ display: window.dselected ? 'none' : 'inline-block' });
 
     if (window.dselected){
-      var cap = document.querySelector('.relations-label');
       var s = this.dashShowingRels;
-      cap.innerHTML = s.dash.d + ' [' + s.dash.rels.length + ']';
-      cap.href = 'https://hackdash.org/dashboards/' + s.dash.d;
-      cap.title = s.dash.rels.length + ' Relations. Click to open dashboard';
+
+      $('.relations-label')
+        .text(s.dash.d + ' [' + s.dash.rels.length + ']')
+        .attr({
+          href: 'https://hackdash.org/dashboards/' + s.dash.d,
+          title: s.dash.rels.length + ' Relations. Click to open dashboard'
+        });
+    }
+    else {
+      $('#help-info').hide();
     }
   }
 /*

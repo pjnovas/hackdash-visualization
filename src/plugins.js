@@ -1,7 +1,11 @@
 
 import 'babel-core/polyfill';
+import jQuery from 'jquery';
 import Handlebars from 'hbsfy/runtime';
 import moment from 'moment';
+
+window.jQuery = jQuery;
+window.$ = jQuery;
 
 Handlebars.registerHelper('parseDate', unixTime => {
   return moment.unix(unixTime).format('DD/MM/YYYY');

@@ -9,8 +9,10 @@
   "author": "Pablo Novas <pjnovas@gmail.com>",
   "license": "ISC",
   "dependencies": {
+    "devbridge-autocomplete": "^1.2.21",
     "gameloop": "^0.3.2",
     "handlebars": "^3.0.3",
+    "jquery": "^2.1.4",
     "moment": "^2.10.3",
     "point2js": "0.0.1",
     "tween.js": "^0.14.0"
