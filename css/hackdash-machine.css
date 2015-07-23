@@ -222,11 +222,16 @@ select {
 
 
 .metrics {
-    cursor:pointer;
     font-size: 18px;
     position: absolute;
     z-index: 3;
 }
+
+.metrics.center a,
+.metrics.center select {
+    cursor: pointer;
+}
+
 
 .metrics.height {
     left: 0;
@@ -239,6 +244,7 @@ select {
     width: 100%;
     text-align: center;
     z-index: 1;
+    cursor: default;
 }
 
 .metrics.radius {
@@ -291,7 +297,7 @@ select {
 .info {
     font-size: 14px;
     color: gray;
-    margin-top: 10px;
+    padding-top: 6px;
     display: inline-block;
 }
 
@@ -310,6 +316,38 @@ select {
     padding: 10px 20px;
     max-width: 300px;
     border-radius: 0 0 6px 6px;
+}
+
+.search {
+    display: inline-block;
+}
+
+.search input {
+    padding: 2px 10px;
+    font-size: 16px;
+    border-radius: 4px;
+    border: 1px solid silver;
+}
+
+.autocomplete-suggestions {
+    background-color: #fff;
+    border: 1px solid silver;
+    border-top: none;
+    box-shadow: 2px 2px 3px rgba(0,0,0,0.23);
+}
+
+.autocomplete-suggestion {
+    padding: 5px 10px;
+    border-bottom: 1px solid silver;
+    cursor: pointer;
+}
+
+.autocomplete-suggestion:last-child {
+    border-bottom: none;
+}
+
+.autocomplete-selected {
+    background: rgb(215, 203, 234);
 }
 
 /* ==========================================================================
