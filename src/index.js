@@ -5,7 +5,7 @@ import Popover from './Popover';
 
 $(function(){
   $('.search').hide();
-  $.ajax(window.dashboards_uri).done(init);
+  $.getJSON(window.dashboards_uri, init);
 });
 
 function init(data){
