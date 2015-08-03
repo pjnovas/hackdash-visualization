@@ -106,6 +106,10 @@ html, body {
     overflow: hidden;
 }
 
+.icon {
+    color: #fff;
+}
+
 #container {
     position: relative;
     width: 100%;
@@ -133,6 +137,38 @@ canvas {
 .logo img {
     width: 58px;
     height: 68px;
+}
+
+.social {
+    position: fixed;
+    z-index: 110;
+    right: 0;
+    bottom: 0;
+    background: white;
+    padding: 5px;
+    border-radius: 6px 0 0 0;
+    box-shadow: -2px -2px 3px rgba(0,0,0,0.14);
+}
+
+.social a {
+    font-size: 20px;
+    padding: 5px;
+    display: block;
+    margin: 4px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.social a.twitter {
+    background-color: #00aced;
+}
+
+.social a.github {
+    background-color: #222;
+}
+
+.social a i {
+
 }
 
 select {
@@ -305,7 +341,7 @@ select {
     display: block;
     position: absolute;
     width: 100%;
-    top: 30px;
+    top: 55px;
     text-align: center;
 }
 
@@ -349,6 +385,29 @@ select {
 .autocomplete-selected {
     background: rgb(215, 203, 234);
 }
+
+.relations-options a {
+    display: inline-block;
+    margin: 0 -6px;
+    border: 1px solid #F19800;
+}
+
+.relations-options a i {
+    margin: 0 -5px;
+}
+
+.relations-options a:hover {
+    text-decoration: none;
+}
+
+.relations-options a.selected {
+    background: #FFD080;
+}
+
+.relations-options a.selected i {
+    color: #7F5E03;
+}
+
 
 /* ==========================================================================
    Helper classes
