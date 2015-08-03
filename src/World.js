@@ -35,8 +35,8 @@ export default class World {
     this.dashboards = new Map();
     this.linesV = [];
     this.linesH = [];
-    this.relationLines = [];
-    //this.hideRelsLines = true;
+    this.lines = [];
+
     this.nonRelsHidden = false;
     this.dashShowingRels = null;
 
@@ -274,15 +274,13 @@ export default class World {
     var ctx = this.context;
 
     ctx.clearRect(0, 0, this.size.x, this.size.y);
-/*
-    if (!this.hideRelsLines){
-      ctx.save();
-      this.relationLines.forEach( line => {
-        if (line) line.draw(ctx);
+
+    if (this.lines){
+      this.lines.forEach( l => {
+        if (l) l.draw(ctx);
       });
-      ctx.restore();
     }
-*/
+
     ctx.save();
     this.dashboards.forEach( dash => {
       dash.draw(ctx);
@@ -344,6 +342,53 @@ export default class World {
     this.entityIndex++;
   }
 
+  // from and to = "ads" || "ps" > admins or contributors
+  findRelated(from, to){
+    var dash = this.dashShowingRels;
+    if (!dash) return;
+
+    $('.relations-options a').removeClass('selected');
+    $('#' + from + '-' + to).addClass('selected');
+
+    var dashboards = [...this.dashboards].map(([k, v]) => v ); // to Array
+    var users = dash.dash[from];
+
+    var related = _.filter(dashboards, d => {
+      if (d.dash.d === dash.dash.d){
+        return true; // if selected > add it without the check of relations
+      }
+
+      return _.intersection(users, d.dash[to]).length > 0 ? true : false;
+    });
+
+    var pA, pB;
+    this.lines = [];
+    related.forEach( (d, i) => {
+      if (!pA){
+        pA = d.position;
+      }
+      else if(!pB){
+        pB = d.position;
+
+        var l = new Line(pA, pB, {
+          lineColor: colors.relLines,
+          lineSize: 3,
+          alpha: 0.7
+        });
+
+        this.lines.push(l);
+        pA = null;
+        pB = null;
+
+        if (i < related.length){
+          // this is NOT the last one
+          pA = d.position;
+        }
+      }
+    });
+
+  }
+
   showRelationsFor(domain){
     window.dselected = true;
     var dash = this.dashboards.get(domain);
@@ -355,26 +400,8 @@ export default class World {
   showRelations(dashboard) {
 
     this.dashShowingRels = dashboard;
-    this.relationLines = [];
-    var p1 = dashboard.position;
-/*
-    dashboard.dash.rels.forEach( domain => {
+    this.lines = [];
 
-      var dash = this.dashboards.get(domain);
-
-      if (dash){
-
-        var l = new Line(p1, dash.position, {
-          lineColor: colors.relLines,
-          lineSize: 1,
-          alpha: 0.7
-        });
-
-      }
-
-      this.relationLines.push(l);
-    });
-*/
     this.toggleRelDOM();
     this.fallNonRels();
   }
@@ -400,19 +427,17 @@ export default class World {
           href: 'https://hackdash.org/dashboards/' + s.dash.d,
           title: s.dash.rels.length + ' Relations. Click to open dashboard'
         });
+
+      $('.relations-options').show();
     }
     else {
       $('.info').show();
       $('.search').show();
       $('#help-info').hide();
+      $('.relations-options a').removeClass('selected');
     }
   }
-/*
-  toggleLinesDOM() {
-    var toggleRelLines = document.getElementById('toggle-rel-lines');
-    toggleRelLines.innerHTML = this.hideRelsLines ? 'show lines':'hide lines';
-  }
-*/
+
   fallNonRels(){
 
     if (!this.dashShowingRels) {
@@ -444,21 +469,15 @@ export default class World {
     });
 
     this.nonRelsHidden = false;
-    //this.toggleLinesDOM();
   }
-/*
-  toggleRelLines() {
-    this.hideRelsLines = !this.hideRelsLines;
-    this.toggleLinesDOM();
-  }
-*/
+
   clearRelations(){
     if (this.dashShowingRels){
       this.dashShowingRels.fillColor = this.gradient;
     }
 
     this.dashShowingRels = null;
-    //this.relationLines = [];
+    this.lines = [];
     this.showAll();
     this.toggleRelDOM();
   }

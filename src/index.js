@@ -29,7 +29,14 @@ function init(data){
 
   $('#hide-others').on('click', function(){
     window.machine.toggleNonRelated();
-    $(this).html(window.hideNonRelated ? '&#8593' : '&#8595');
+    var icon = $(this).children('.icon');
+
+    if (window.hideNonRelated){
+      icon.removeClass('icon-down-big').addClass('icon-up-big');
+    }
+    else {
+      icon.removeClass('icon-up-big').addClass('icon-down-big');
+    }
   });
 
   $('#clear-relations').on('click', window.machine.clearRel);
@@ -55,6 +62,11 @@ function init(data){
         $('#search').val('');
       }
     }
+  });
+
+  $('.relations-options > a').on('click', function(){
+    var rels = this.id.split('-');
+    window.machine.showRelated(rels[0], rels[1]);
   });
 
 /*

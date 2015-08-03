@@ -55,5 +55,9 @@ export default function(options){
     world.showRelationsFor(domain);
   };
 
+  game.showRelated = function(from, to){
+    world.findRelated(from, to);
+  };
+
   return game;
 }

@@ -7,6 +7,7 @@
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
+    <link rel="stylesheet" href="css/fontello.css">
     <link rel="stylesheet" href="css/hackdash-machine.css">
   </head>
   <body>
@@ -28,9 +29,33 @@
       <div class="metrics center">
         <div class="relations" style="display: none;">
           <a class="relations-label" target="_blank"></a>
-          <a id="clear-relations" class="btn">x</a>
-          <a id="hide-others" class="btn">&#8595;</a>
-          <a id="help" class="btn">?</a>
+          <a id="clear-relations" class="btn"><i class="icon icon-cancel"></i></a>
+          <a id="hide-others" class="btn"><i class="icon icon-down-big"></i></a>
+          <a id="help" class="btn"><i class="icon icon-info"></i></a>
+
+          <div class="relations-options">
+            <a id="ads-ps" class="btn" title="Admins > Contributors">
+              <i class="icon icon-user"></i>
+              <i class="icon icon-right-open"></i>
+              <i class="icon icon-group"></i>
+            </a>
+            <a id="ads-ads" class="btn" title="Admins > Admins">
+              <i class="icon icon-user"></i>
+              <i class="icon icon-right-open"></i>
+              <i class="icon icon-user"></i>
+            </a>
+            <a id="ps-ads" class="btn" title="Contributors > Admins">
+              <i class="icon icon-group"></i>
+              <i class="icon icon-right-open"></i>
+              <i class="icon icon-user"></i>
+            </a>
+            <a id="ps-ps" class="btn" title="Contributors > Contributors">
+              <i class="icon icon-group"></i>
+              <i class="icon icon-right-open"></i>
+              <i class="icon icon-group"></i>
+            </a>
+          </div>
+
         </div>
         <span class="info">loading</span>
         <div class="search">
@@ -61,11 +86,22 @@
       </a>
     </div>
 
+    <div class="social">
+      <a class="twitter" title="Tweet this!"
+        href="https://twitter.com/intent/tweet?url=https%3A%2F%2Fpjnovas.github.io%2Fhackdash-visualization%2F&hashtags=hackdash&text=Hackdash+visualization+of+Dashboards">
+        <i class="icon icon-twitter-1"></i>
+      </a>
+      <a class="github" title="Fork me on GitHub" href="https://github.com/pjnovas/hackdash-visualization" target="_blank">
+        <i class="icon icon-github-circled-alt2"></i>
+      </a>
+    </div>
+
     <script>
       window.dashboards_uri = "/js/dashboards.json";
     </script>
 
     <script src="js/hackdash-machine.js"></script>
+    <script type="text/javascript" src="//platform.twitter.com/widgets.js"></script>
 
     <script>
       (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
