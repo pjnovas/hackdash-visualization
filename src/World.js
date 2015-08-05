@@ -390,6 +390,10 @@ export default class World {
   }
 
   showRelationsFor(domain){
+    if (!this.dashboards.has(domain)){
+      return;
+    }
+
     window.dselected = true;
     var dash = this.dashboards.get(domain);
     if (dash){

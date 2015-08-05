@@ -32622,6 +32622,10 @@ var World = (function () {
   }, {
     key: 'showRelationsFor',
     value: function showRelationsFor(domain) {
+      if (!this.dashboards.has(domain)) {
+        return;
+      }
+
       window.dselected = true;
       var dash = this.dashboards.get(domain);
       if (dash) {
@@ -32744,6 +32748,10 @@ var _Popover = require('./Popover');
 
 var _Popover2 = _interopRequireDefault(_Popover);
 
+var _lodash = require('lodash');
+
+var _lodash2 = _interopRequireDefault(_lodash);
+
 $(function () {
   $('.search').hide();
   $.getJSON(window.dashboards_uri, init);
@@ -32785,58 +32793,71 @@ function init(data) {
     $('#help-info').toggle();
   });
 
-  var dashes = data.filter(function (dash) {
-    return dash.rels.length;
-  });
-
-  dashes = dashes.map(function (dash) {
-    return { value: dash.d + ' [' + dash.rels.length + ']', data: dash };
-  });
-
-  $('#search').autocomplete({
-    lookupLimit: 5,
-    lookup: dashes,
-    onSelect: function onSelect(suggestion) {
-      if (suggestion && suggestion.value) {
-        window.machine.showRelationsFor(suggestion.data.d);
-        $('#search').val('');
-      }
-    }
-  });
-
   $('.relations-options > a').on('click', function () {
     var rels = this.id.split('-');
     window.machine.showRelated(rels[0], rels[1]);
   });
 
-  /*
-    // Removed API call since there are dashboards wich are not on the visualization.
-  
-    $('#search').autocomplete({
-      serviceUrl: 'https://hackdash.org/api/v2/dashboards',
-      deferRequestBy: 300,
-      paramName: 'q',
-      params: { limit: 5 },
-      transformResult: function(response) {
-        var list = JSON.parse(response);
-  
-        return {
-          suggestions: $.map(list, function(dashboard) {
-            return { value: dashboard.domain, data: dashboard.domain };
-          })
-        };
-      },
-      onSelect: function (suggestion) {
-        if (suggestion && suggestion.value){
-          window.machine.showRelationsFor(suggestion.value);
-        }
+  var dashesByDomain = {};
+  var dashes = data.forEach(function (dash) {
+    if (dash.rels.length) {
+      dashesByDomain[dash.d] = dash;
+    }
+  });
+
+  $('#search').autocomplete({
+    serviceUrl: 'https://hackdash.org/api/v2/dashboards',
+    deferRequestBy: 300,
+    paramName: 'q',
+    params: { limit: 10 },
+    transformResult: function transformResult(response) {
+      var list = JSON.parse(response);
+
+      list = list.filter(function (dashboard) {
+        return dashesByDomain[dashboard.domain] ? true : false;
+      });
+
+      return {
+        suggestions: $.map(_lodash2['default'].take(list, 5), function (dashboard) {
+          var rels = ' [' + dashesByDomain[dashboard.domain].rels.length + ']';
+
+          return {
+            value: (dashboard.title || dashboard.domain) + rels,
+            data: dashboard
+          };
+        })
+      };
+    },
+    onSelect: function onSelect(suggestion) {
+      if (suggestion && suggestion.value) {
+        window.machine.showRelationsFor(suggestion.data.domain);
       }
-    });
+    }
+  });
+
+  /*
+   var dashes = data.filter( dash => {
+    return dash.rels.length;
+  });
+   dashes = dashes.map( dash => {
+    return { value: dash.d + ' [' + dash.rels.length + ']', data: dash };
+  });
+   $('#search').autocomplete({
+    lookupLimit: 5,
+    lookup: dashes,
+    onSelect: function (suggestion) {
+      if (suggestion && suggestion.value){
+        window.machine.showRelationsFor(suggestion.data.d);
+        $('#search').val('');
+      }
+    }
+  });
   */
+
   window.machine.start();
 }
 
-},{"./Machine":"/home/pjnovas/projects/hackdash-machine/src/Machine.js","./Popover":"/home/pjnovas/projects/hackdash-machine/src/Popover.js","./plugins":"/home/pjnovas/projects/hackdash-machine/src/plugins.js"}],"/home/pjnovas/projects/hackdash-machine/src/plugins.js":[function(require,module,exports){
+},{"./Machine":"/home/pjnovas/projects/hackdash-machine/src/Machine.js","./Popover":"/home/pjnovas/projects/hackdash-machine/src/Popover.js","./plugins":"/home/pjnovas/projects/hackdash-machine/src/plugins.js","lodash":"/home/pjnovas/projects/hackdash-machine/node_modules/lodash/index.js"}],"/home/pjnovas/projects/hackdash-machine/src/plugins.js":[function(require,module,exports){
 'use strict';
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }

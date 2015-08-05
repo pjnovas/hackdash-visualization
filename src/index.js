@@ -2,6 +2,7 @@
 import './plugins';
 import Machine from './Machine';
 import Popover from './Popover';
+import _ from 'lodash';
 
 $(function(){
   $('.search').hide();
@@ -45,6 +46,50 @@ function init(data){
     $('#help-info').toggle();
   });
 
+  $('.relations-options > a').on('click', function(){
+    var rels = this.id.split('-');
+    window.machine.showRelated(rels[0], rels[1]);
+  });
+
+  var dashesByDomain = {};
+  var dashes = data.forEach( dash => {
+    if(dash.rels.length){
+      dashesByDomain[dash.d] = dash;
+    }
+  });
+
+  $('#search').autocomplete({
+    serviceUrl: 'https://hackdash.org/api/v2/dashboards',
+    deferRequestBy: 300,
+    paramName: 'q',
+    params: { limit: 10 },
+    transformResult: function(response) {
+      var list = JSON.parse(response);
+
+      list = list.filter( dashboard => {
+        return dashesByDomain[dashboard.domain] ? true : false;
+      });
+
+      return {
+        suggestions: $.map(_.take(list, 5), function(dashboard) {
+          var rels = ' [' + dashesByDomain[dashboard.domain].rels.length + ']';
+
+          return {
+            value: (dashboard.title || dashboard.domain) + rels,
+            data: dashboard
+          };
+        })
+      };
+    },
+    onSelect: function (suggestion) {
+      if (suggestion && suggestion.value){
+        window.machine.showRelationsFor(suggestion.data.domain);
+      }
+    }
+  });
+
+  /*
+
   var dashes = data.filter( dash => {
     return dash.rels.length;
   });
@@ -63,36 +108,8 @@ function init(data){
       }
     }
   });
+  */
 
-  $('.relations-options > a').on('click', function(){
-    var rels = this.id.split('-');
-    window.machine.showRelated(rels[0], rels[1]);
-  });
-
-/*
-  // Removed API call since there are dashboards wich are not on the visualization.
-
-  $('#search').autocomplete({
-    serviceUrl: 'https://hackdash.org/api/v2/dashboards',
-    deferRequestBy: 300,
-    paramName: 'q',
-    params: { limit: 5 },
-    transformResult: function(response) {
-      var list = JSON.parse(response);
-
-      return {
-        suggestions: $.map(list, function(dashboard) {
-          return { value: dashboard.domain, data: dashboard.domain };
-        })
-      };
-    },
-    onSelect: function (suggestion) {
-      if (suggestion && suggestion.value){
-        window.machine.showRelationsFor(suggestion.value);
-      }
-    }
-  });
-*/
   window.machine.start();
 }
 
