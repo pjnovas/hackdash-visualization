@@ -32647,6 +32647,11 @@ var World = (function () {
   }, {
     key: 'toggleRelDOM',
     value: function toggleRelDOM() {
+      if (window.dselected === this.laststate) {
+        return; // avoid using DOM on every loop
+      }
+
+      this.laststate = window.dselected;
 
       $('.relations').css({ display: window.dselected ? 'inline-table' : 'none' });
 

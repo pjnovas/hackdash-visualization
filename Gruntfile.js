@@ -44,7 +44,10 @@ module.exports = function (grunt) {
             src: [
               'js/<%= pkg.name %>.js',
               'css/<%= pkg.name %>.css',
+              'css/fontello.css',
               'js/dashboards.json',
+              'font/**/*',
+              '!font/config.json',
               'logo.png',
               'index.html'
             ],

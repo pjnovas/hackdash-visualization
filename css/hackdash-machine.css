@@ -386,8 +386,13 @@ select {
     background: rgb(215, 203, 234);
 }
 
+.relations-options {
+    margin-top: 2px;
+    width: 500px;
+}
+
 .relations-options a {
-    display: inline-block;
+    display: inline;
     margin: 0 -6px;
     border: 1px solid #F19800;
 }
