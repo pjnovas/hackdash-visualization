@@ -8,6 +8,7 @@ export default class Dashboard extends Circle {
     super(pos, options);
     this.dash = options.dash;
     this.hidden = false;
+    this.userMark = false;
   }
 
   onClick(){

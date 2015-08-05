@@ -8,11 +8,12 @@ import Line from './Line';
 import VLine from './VLine';
 import HLine from './HLine';
 
-var colors = {
+var colors = window.colors = {
   lines: '#666',
   relLines: '#777',
   selected: 'orange',
-  related: '#E45757' //'#50CE64' //'#76D9A7'
+  related: '#E45757',
+  usermark: '#3C9D71'
 };
 
 export default class World {
@@ -255,7 +256,10 @@ export default class World {
     this.dashboards.forEach( dash => {
       dash.update(dt);
 
-      if (this.dashShowingRels && !dash.hidden){
+      if (dash.userMark){
+        dash.fillColor = colors.usermark;
+      }
+      else if (this.dashShowingRels && !dash.hidden){
         dash.fillColor = colors.related;
       }
       else {
@@ -478,6 +482,25 @@ export default class World {
     });
 
     this.nonRelsHidden = false;
+  }
+
+  showUserDashboards(uid){
+    this.dashboards.forEach( dash => {
+      var isAdmin = dash.dash.ads.indexOf(uid) > -1 ? true: false;
+      var isContrib = dash.dash.ps.indexOf(uid) > -1 ? true: false;
+      if (isAdmin || isContrib){
+        dash.userMark = true;
+      }
+      else {
+        dash.userMark = false;
+      }
+    });
+  }
+
+  clearUserDashboards(){
+    this.dashboards.forEach( dash => {
+      dash.userMark = false;
+    });
   }
 
   clearRelations(){

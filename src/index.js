@@ -51,6 +51,37 @@ function init(data){
     window.machine.showRelated(rels[0], rels[1]);
   });
 
+  $('.finder-toggler').on('click', function(){
+    var speople = $('.search-people');
+    if (speople.is(':hidden')){
+      clearSelectedPerson();
+      speople.show();
+    }
+    else {
+      clearSelectedPerson();
+      speople.hide();
+    }
+  });
+
+  $('.clear-person').on('click', clearSelectedPerson);
+
+  function showSelectedPerson(name){
+    $('.search-people').hide();
+    $('.selected-person')
+      .show()
+      .children('span')
+      .text(name);
+  }
+
+  function clearSelectedPerson(name){
+    window.machine.clearUserDashboards();
+    $('.search-people').show();
+    $('.selected-person')
+      .hide()
+      .children('span')
+      .text('');
+  }
+
   var dashesByDomain = {};
   var dashes = data.forEach( dash => {
     if(dash.rels.length){
@@ -84,6 +115,36 @@ function init(data){
     onSelect: function (suggestion) {
       if (suggestion && suggestion.value){
         window.machine.showRelationsFor(suggestion.data.domain);
+        $('#search').val('');
+      }
+    }
+  });
+
+  $('#find-people').autocomplete({
+    serviceUrl: 'https://hackdash.org/api/v2/users',
+    deferRequestBy: 300,
+    paramName: 'q',
+    params: { limit: 5 },
+    transformResult: function(response) {
+      var list = JSON.parse(response);
+
+      return {
+        suggestions: $.map(list, function(person) {
+          return {
+            value: person.name,
+            data: person
+          };
+        })
+      };
+    },
+    formatResult: function (suggestion, currentValue) {
+      return '<img src="'+suggestion.data.picture+'" />' + suggestion.value;
+    },
+    onSelect: function (suggestion) {
+      if (suggestion && suggestion.value){
+        window.machine.showUserDashboards(suggestion.data._id);
+        $('#find-people').val('');
+        showSelectedPerson(suggestion.value);
       }
     }
   });

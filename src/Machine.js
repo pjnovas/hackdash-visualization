@@ -59,5 +59,13 @@ export default function(options){
     world.findRelated(from, to);
   };
 
+  game.showUserDashboards = function(uid){
+    world.showUserDashboards(uid);
+  };
+
+  game.clearUserDashboards = function(){
+    world.clearUserDashboards();
+  };
+
   return game;
 }
