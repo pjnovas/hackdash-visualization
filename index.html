@@ -28,10 +28,10 @@
 
       <div class="metrics center">
         <div class="relations" style="display: none;">
-          <a class="relations-label" target="_blank"></a>
-          <a id="clear-relations" class="btn"><i class="icon icon-cancel"></i></a>
-          <a id="hide-others" class="btn"><i class="icon icon-down-big"></i></a>
-          <a id="help" class="btn"><i class="icon icon-info"></i></a>
+          <a class="relations-label" target="_blank"></a><!--
+          --><a id="clear-relations" class="btn"><i class="icon icon-cancel"></i></a><!--
+          --><a id="hide-others" class="btn"><i class="icon icon-down-big"></i></a><!--
+          --><a id="help" class="btn"><i class="icon icon-info"></i></a>
 
           <div class="relations-options">
             <a id="ads-ps" class="btn" title="Admins > Contributors">
@@ -72,6 +72,20 @@
           <option value="rc">Relations</option>
         </select>
 
+      </div>
+
+      <div class="finder">
+        <a class="finder-toggler">
+          <i class="icon icon-search"></i>
+          <i class="icon icon-child"></i>
+        </a>
+        <div class="search-people" style="display:none">
+          <input id="find-people" type="text" placeholder="find people">
+        </div>
+        <div class="selected-person" style="display:none">
+          <span></span>
+          <a class="clear-person"><i class="icon icon-cancel"></i></a>
+        </div>
       </div>
     </div>
 
