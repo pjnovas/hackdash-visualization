@@ -16,6 +16,8 @@ var colors = window.colors = {
   usermark: '#3C9D71'
 };
 
+window.showDelay = 1;
+
 export default class World {
 
   constructor(container, data, options) {
@@ -24,6 +26,10 @@ export default class World {
 
     this.size = options && options.size ||
       new Point(this.container.offsetWidth, this.container.offsetHeight);
+
+    this.timeline = options.timeline || false;
+    this.vel = options && options.vel || window.showDelay;
+    this.cVel = this.vel;
 
     this.padding = new Point(150, 150);
 
@@ -251,6 +257,11 @@ export default class World {
 
   update(dt) {
 
+    if (this.timeline){
+      this.updateTimeLine(dt);
+      return;
+    }
+
     this.nextEntity();
 
     this.dashboards.forEach( dash => {
@@ -270,6 +281,49 @@ export default class World {
     if (this.dashShowingRels){
       this.dashShowingRels.fillColor = colors.selected;
     }
+
+  }
+
+  updateTimeLine(dt){
+    this.cVel -= dt;
+
+    if (this.cVel <= 0){
+      this.cVel = this.vel;
+      this.nextEntity();
+
+      var idx = this.entityIndex-1;
+      if (this.data[idx]){
+        var domain = this.data[idx].d;
+        var d = this.dashboards.get(domain); // current going up
+
+        this.dashboards.forEach( (dash) => {
+          dash.markCurrent = false;
+          if (domain !== dash.dash.d && d.dash.rels.indexOf(dash.dash.d) === -1){
+            dash.markRelated = false;
+          }
+          else {
+            dash.markRelated = true;
+          }
+        });
+
+        d.markCurrent = true;
+
+      }
+    }
+
+    this.dashboards.forEach( dash => {
+      dash.update(dt);
+
+      if (dash.markRelated){
+        dash.fillColor = colors.related;
+      }
+      else if (dash.markCurrent){
+        dash.fillColor = colors.selected;
+      }
+      else {
+        dash.fillColor = this.gradient;
+      }
+    });
 
   }
 
@@ -406,7 +460,6 @@ export default class World {
   }
 
   showRelations(dashboard) {
-
     this.dashShowingRels = dashboard;
     this.lines = [];
 
@@ -515,5 +568,3 @@ export default class World {
   }
 
 };
-
-

@@ -31636,7 +31636,7 @@ var Dashboard = (function (_Circle) {
       this.showPos = new _point2js2['default'](to).clone();
 
       if (!this.hidden) {
-        this.tweenTo({ x: to.x, y: to.y }, toR, 1, 'Quartic.Out');
+        this.tweenTo({ x: to.x, y: to.y }, toR, window.showDelay, 'Quartic.Out');
       }
     }
   }, {
@@ -31949,7 +31949,10 @@ var _Input2 = _interopRequireDefault(_Input);
 exports['default'] = function (options) {
 
   var game = new _gameloop2['default']();
-  var world = new _World2['default'](options.container, options.data);
+  var world = new _World2['default'](options.container, options.data, {
+    timeline: options.timeline
+  });
+
   var input = new _Input2['default'](options.container);
   input.enabled = false;
 
@@ -32238,6 +32241,8 @@ var colors = window.colors = {
   usermark: '#3C9D71'
 };
 
+window.showDelay = 1;
+
 var World = (function () {
   function World(container, data, options) {
     _classCallCheck(this, World);
@@ -32246,6 +32251,10 @@ var World = (function () {
     this.data = data;
 
     this.size = options && options.size || new _point2js2['default'](this.container.offsetWidth, this.container.offsetHeight);
+
+    this.timeline = options.timeline || false;
+    this.vel = options && options.vel || window.showDelay;
+    this.cVel = this.vel;
 
     this.padding = new _point2js2['default'](150, 150);
 
@@ -32483,6 +32492,11 @@ var World = (function () {
     value: function update(dt) {
       var _this4 = this;
 
+      if (this.timeline) {
+        this.updateTimeLine(dt);
+        return;
+      }
+
       this.nextEntity();
 
       this.dashboards.forEach(function (dash) {
@@ -32500,6 +32514,47 @@ var World = (function () {
       if (this.dashShowingRels) {
         this.dashShowingRels.fillColor = colors.selected;
       }
+    }
+  }, {
+    key: 'updateTimeLine',
+    value: function updateTimeLine(dt) {
+      var _this5 = this;
+
+      this.cVel -= dt;
+
+      if (this.cVel <= 0) {
+        this.cVel = this.vel;
+        this.nextEntity();
+
+        var idx = this.entityIndex - 1;
+        if (this.data[idx]) {
+          var domain = this.data[idx].d;
+          var d = this.dashboards.get(domain); // current going up
+
+          this.dashboards.forEach(function (dash) {
+            dash.markCurrent = false;
+            if (domain !== dash.dash.d && d.dash.rels.indexOf(dash.dash.d) === -1) {
+              dash.markRelated = false;
+            } else {
+              dash.markRelated = true;
+            }
+          });
+
+          d.markCurrent = true;
+        }
+      }
+
+      this.dashboards.forEach(function (dash) {
+        dash.update(dt);
+
+        if (dash.markRelated) {
+          dash.fillColor = colors.related;
+        } else if (dash.markCurrent) {
+          dash.fillColor = colors.selected;
+        } else {
+          dash.fillColor = _this5.gradient;
+        }
+      });
     }
   }, {
     key: 'draw',
@@ -32581,7 +32636,7 @@ var World = (function () {
 
     // from and to = "ads" || "ps" > admins or contributors
     value: function findRelated(from, to) {
-      var _this5 = this;
+      var _this6 = this;
 
       var dash = this.dashShowingRels;
       if (!dash) return;
@@ -32620,7 +32675,7 @@ var World = (function () {
             alpha: 0.7
           });
 
-          _this5.lines.push(l);
+          _this6.lines.push(l);
           pA = null;
           pB = null;
 
@@ -32647,7 +32702,6 @@ var World = (function () {
   }, {
     key: 'showRelations',
     value: function showRelations(dashboard) {
-
       this.dashShowingRels = dashboard;
       this.lines = [];
 
@@ -32693,7 +32747,7 @@ var World = (function () {
   }, {
     key: 'fallNonRels',
     value: function fallNonRels() {
-      var _this6 = this;
+      var _this7 = this;
 
       if (!this.dashShowingRels) {
         this.showAll();
@@ -32702,7 +32756,7 @@ var World = (function () {
 
       var i = 0;
       this.dashboards.forEach(function (dash) {
-        if (_this6.dashShowingRels.dash.d !== dash.dash.d && _this6.dashShowingRels.dash.rels.indexOf(dash.dash.d) === -1) {
+        if (_this7.dashShowingRels.dash.d !== dash.dash.d && _this7.dashShowingRels.dash.rels.indexOf(dash.dash.d) === -1) {
           dash.hide(i);
         } else {
           dash.show(i);
@@ -32797,7 +32851,8 @@ function init(data) {
 
   window.machine = (0, _Machine2['default'])({
     container: $('#container').get(0),
-    data: data
+    data: data,
+    timeline: false
   });
 
   $('#radius').on('change', function (e) {

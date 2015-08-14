@@ -17,7 +17,8 @@ function init(data){
 
   window.machine = Machine({
     container: $('#container').get(0),
-    data: data
+    data: data,
+    timeline: false
   });
 
   $('#radius').on('change', function(e) {
@@ -173,4 +174,3 @@ function init(data){
 
   window.machine.start();
 }
-

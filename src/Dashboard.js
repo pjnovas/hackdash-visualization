@@ -28,7 +28,7 @@ export default class Dashboard extends Circle {
     this.showPos = new Point(to).clone();
 
     if (!this.hidden){
-      this.tweenTo({ x: to.x, y: to.y }, toR, 1, 'Quartic.Out');
+      this.tweenTo({ x: to.x, y: to.y }, toR, window.showDelay, 'Quartic.Out');
     }
   }
 

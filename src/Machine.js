@@ -6,7 +6,10 @@ import Input from './Input';
 export default function(options){
 
   var game = new Gameloop();
-  var world = new World(options.container, options.data);
+  var world = new World(options.container, options.data, {
+    timeline: options.timeline
+  });
+
   var input = new Input(options.container);
   input.enabled = false;
 
